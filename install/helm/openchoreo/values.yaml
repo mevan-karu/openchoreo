@@ -83,7 +83,6 @@ global:
         # @schema
         # -- Whether this is a critical environment
         isCritical: false
-
       # @schema
       # type: [null, object]
       # @schema
@@ -149,13 +148,11 @@ global:
               # @schema
               # -- Whether approval is required for promotion
               requiresApproval: false
-
 # @schema
 # type: [null, string]
 # @schema
 # -- Override the full name of the chart release
 fullnameOverride: openchoreo
-
 # @schema
 # type: [null, object]
 # @schema
@@ -180,7 +177,7 @@ controllerManager:
     # type: [null, string]
     # @schema
     # -- Container image tag
-    tag: latest
+    tag: latest-dev
     # @schema
     # enum: [Always, IfNotPresent, Never]
     # @schema
@@ -641,7 +638,6 @@ controllerManager:
       # @schema
       # -- AppArmor profile type
       type: RuntimeDefault
-
 # @schema
 # type: [null, object]
 # @schema
@@ -1157,7 +1153,6 @@ openchoreoApi:
       # @schema
       # -- AppArmor profile type
       type: RuntimeDefault
-
 # @schema
 # type: [null, object]
 # @schema
