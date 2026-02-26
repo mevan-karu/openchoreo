@@ -9,7 +9,7 @@
 # Examples:
 #   OC_API__SERVER__PORT=9090
 #   OC_API__LOGGING__LEVEL=debug
-#   OC_API__SECURITY__AUTHENTICATION__JWT__ENABLED=true
+#   OC_API__SECURITY__ENABLED=true
 
 server:
   # Address to bind the HTTP server to.
@@ -49,12 +49,14 @@ server:
   middleware: { }
 
 security:
+  # Enable all security checks (authentication and authorization).
+  # When false, global authentication and authorization enforcement is disabled
+  # and requests are processed as anonymous without any access restrictions.
+  # This overrides all individual security settings.
+  enabled: false
+
   authentication:
     jwt:
-      # Enable JWT authentication.
-      # When disabled, all requests are treated as unauthenticated.
-      enabled: false
-
       # List of acceptable audiences (aud) for the JWT.
       # Tokens must contain at least one of these audiences.
       audiences: [ ]
@@ -104,6 +106,7 @@ security:
   authorization:
     # Enable authorization checks using Casbin.
     # When disabled, all authenticated requests are permitted.
+    # Note: security.enabled=false also disables authorization.
     enabled: false
 
     cache:

@@ -32,7 +32,7 @@ func (h *Handler) OAuthProtectedResourceMetadata(w http.ResponseWriter, r *http.
 			h.config.Identity.OIDC.Issuer,
 		},
 		Clients:         clients,
-		SecurityEnabled: h.config.Security.Authentication.JWT.Enabled,
+		SecurityEnabled: h.config.Security.Enabled,
 		Logger:          h.logger,
 	})
 

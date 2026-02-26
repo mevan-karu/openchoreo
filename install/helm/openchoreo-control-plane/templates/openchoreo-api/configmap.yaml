@@ -20,9 +20,9 @@ data:
       middleware: {}
 
     security:
+      enabled: {{ .Values.security.enabled }}
       authentication:
         jwt:
-          enabled: {{ .Values.security.enabled }}
           audiences:
             {{- if .Values.security.jwt.audience }}
             - {{ .Values.security.jwt.audience | quote }}

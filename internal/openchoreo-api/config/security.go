@@ -17,6 +17,10 @@ import (
 
 // SecurityConfig defines all security-related settings.
 type SecurityConfig struct {
+	// Enabled enables all security checks (authentication and authorization).
+	// When false, authentication and authorization enforcement is skipped and
+	// requests are processed as anonymous without any access restrictions.
+	Enabled bool `koanf:"enabled"`
 	// Authentication defines authentication settings.
 	Authentication AuthenticationConfig `koanf:"authentication"`
 	// Subjects defines subject types for identity classification.
@@ -29,6 +33,7 @@ type SecurityConfig struct {
 // SecurityDefaults returns the default security configuration.
 func SecurityDefaults() SecurityConfig {
 	return SecurityConfig{
+		Enabled:        true,
 		Authentication: AuthenticationDefaults(),
 		Subjects:       nil,
 		Authorization:  AuthorizationDefaults(),
@@ -37,6 +42,10 @@ func SecurityDefaults() SecurityConfig {
 
 // Validate validates the security configuration.
 func (c *SecurityConfig) Validate(path *config.Path) config.ValidationErrors {
+	if !c.Enabled {
+		return nil // skip all validation when security is disabled
+	}
+
 	var errs config.ValidationErrors
 
 	errs = append(errs, c.Authentication.Validate(path.Child("authentication"))...)
@@ -88,8 +97,6 @@ func (c *AuthenticationConfig) Validate(path *config.Path) config.ValidationErro
 
 // JWTConfig defines JWT authentication settings.
 type JWTConfig struct {
-	// Enabled enables JWT authentication.
-	Enabled bool `koanf:"enabled"`
 	// Audiences is the list of acceptable token audiences (aud claim).
 	// Token must contain at least one of these audiences. Optional.
 	Audiences []string `koanf:"audiences"`
@@ -102,7 +109,6 @@ type JWTConfig struct {
 // JWTDefaults returns the default JWT configuration.
 func JWTDefaults() JWTConfig {
 	return JWTConfig{
-		Enabled:   false,
 		ClockSkew: 0,
 		JWKS:      JWKSDefaults(),
 	}
@@ -111,10 +117,6 @@ func JWTDefaults() JWTConfig {
 // Validate validates the JWT configuration.
 func (c *JWTConfig) Validate(path *config.Path) config.ValidationErrors {
 	var errs config.ValidationErrors
-
-	if !c.Enabled {
-		return errs // skip validation if disabled
-	}
 
 	if err := config.MustBeNonNegative(path.Child("clock_skew"), c.ClockSkew); err != nil {
 		errs = append(errs, err)
@@ -127,9 +129,10 @@ func (c *JWTConfig) Validate(path *config.Path) config.ValidationErrors {
 
 // ToJWTMiddlewareConfig converts to the JWT middleware library config.
 // The oidc parameter provides issuer and JWKS URL from identity configuration.
-func (c *JWTConfig) ToJWTMiddlewareConfig(oidc *OIDCConfig, logger *slog.Logger, resolver *jwt.Resolver) jwt.Config {
+// The securityEnabled parameter propagates the top-level security.enabled flag.
+func (c *JWTConfig) ToJWTMiddlewareConfig(oidc *OIDCConfig, logger *slog.Logger, resolver *jwt.Resolver, securityEnabled bool) jwt.Config {
 	return jwt.Config{
-		Disabled:                     !c.Enabled,
+		Disabled:                     !securityEnabled,
 		JWKSURL:                      oidc.JWKSURL,
 		JWKSRefreshInterval:          c.JWKS.RefreshInterval,
 		JWKSURLTLSInsecureSkipVerify: c.JWKS.SkipTLSVerify,
@@ -340,9 +343,10 @@ func (c *AuthzCacheConfig) Validate(path *config.Path) config.ValidationErrors {
 }
 
 // ToAuthzConfig converts to the authz library config.
-func (c *AuthorizationConfig) ToAuthzConfig() authz.Config {
+// The securityEnabled parameter propagates the top-level security.enabled flag.
+func (c *AuthorizationConfig) ToAuthzConfig(securityEnabled bool) authz.Config {
 	return authz.Config{
-		Enabled:        c.Enabled,
+		Enabled:        securityEnabled && c.Enabled,
 		CacheEnabled:   c.Cache.Enabled,
 		CacheTTL:       c.Cache.TTL,
 		ResyncInterval: c.ResyncInterval,

@@ -282,7 +282,7 @@ func (h *Handler) InitJWTMiddleware() func(http.Handler) http.Handler {
 		}
 	}
 
-	return jwt.Middleware(jwtCfg.ToJWTMiddlewareConfig(&h.config.Identity.OIDC, h.logger, resolver))
+	return jwt.Middleware(jwtCfg.ToJWTMiddlewareConfig(&h.config.Identity.OIDC, h.logger, resolver, h.config.Security.Enabled))
 }
 
 func (h *Handler) initMCPMiddleware() func(http.Handler) http.Handler {

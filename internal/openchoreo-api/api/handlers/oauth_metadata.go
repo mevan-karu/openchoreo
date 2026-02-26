@@ -29,7 +29,7 @@ func (h *Handler) GetOAuthProtectedResourceMetadata(
 		return clients[i].Name < clients[j].Name
 	})
 
-	securityEnabled := h.Config.Security.Authentication.JWT.Enabled
+	securityEnabled := h.Config.Security.Enabled
 	resource := strings.TrimSuffix(h.Config.Server.PublicURL, "/") + "/mcp"
 
 	response := gen.GetOAuthProtectedResourceMetadata200JSONResponse{

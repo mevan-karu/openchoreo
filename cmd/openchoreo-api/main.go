@@ -229,7 +229,7 @@ func setupRuntime(ctx context.Context, cfg *config.Config, k8sClient client.Clie
 	var mgr ctrl.Manager
 
 	// When enabled, create a controller-runtime manager with informers for authz CRDs
-	if authzCfg.Enabled {
+	if cfg.Security.Enabled && authzCfg.Enabled {
 		logger.Info("Setting up controller manager for authorization CRD informers")
 		cacheOpts := cache.Options{
 			ByObject: map[client.Object]cache.ByObject{
@@ -255,7 +255,7 @@ func setupRuntime(ctx context.Context, cfg *config.Config, k8sClient client.Clie
 		}
 	}
 
-	pap, pdp, err := authz.Initialize(ctx, mgr, authzCfg.ToAuthzConfig(), k8sClient, logger)
+	pap, pdp, err := authz.Initialize(ctx, mgr, authzCfg.ToAuthzConfig(cfg.Security.Enabled), k8sClient, logger)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize authorization: %w", err)
 	}

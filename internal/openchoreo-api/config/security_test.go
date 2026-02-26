@@ -73,6 +73,7 @@ func TestSecurityConfig_ValidateSubjects_DuplicatePriorities(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			cfg := SecurityConfig{
+				Enabled:        true,
 				Authentication: AuthenticationDefaults(),
 				Subjects:       tt.subjects,
 				Authorization:  AuthorizationDefaults(),
@@ -107,24 +108,13 @@ func TestJWTConfig_Validate(t *testing.T) {
 		expectedErrors config.ValidationErrors
 	}{
 		{
-			name: "disabled skips all validation",
-			cfg: JWTConfig{
-				Enabled: false,
-			},
-			expectedErrors: nil,
-		},
-		{
-			name: "enabled with defaults is valid",
-			cfg: JWTConfig{
-				Enabled: true,
-				// issuer and jwks_url now come from identity.oidc
-			},
+			name:           "defaults are valid",
+			cfg:            JWTConfig{},
 			expectedErrors: nil,
 		},
 		{
 			name: "negative clock_skew is invalid",
 			cfg: JWTConfig{
-				Enabled:   true,
 				ClockSkew: -1 * time.Second,
 			},
 			expectedErrors: config.ValidationErrors{
@@ -134,7 +124,6 @@ func TestJWTConfig_Validate(t *testing.T) {
 		{
 			name: "negative jwks refresh_interval is invalid",
 			cfg: JWTConfig{
-				Enabled: true,
 				JWKS: JWKSConfig{
 					RefreshInterval: -1 * time.Hour,
 				},
@@ -218,6 +207,75 @@ func TestAuthorizationConfig_Validate(t *testing.T) {
 			errs := tt.cfg.Validate(config.NewPath("authz"))
 			if diff := cmp.Diff(tt.expectedErrors, errs); diff != "" {
 				t.Errorf("validation errors mismatch (-want +got):\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestSecurityConfig_Validate_GlobalDisable(t *testing.T) {
+	// SecurityConfig.Validate should short-circuit and return nil when Enabled=false,
+	// even if nested configs would otherwise fail validation.
+	cfg := SecurityConfig{
+		Enabled: false,
+		Authentication: AuthenticationConfig{
+			JWT: JWTConfig{
+				ClockSkew: -1 * time.Second, // would normally fail
+			},
+		},
+		Authorization: AuthorizationConfig{
+			Enabled:        true,
+			ResyncInterval: -1 * time.Second, // would normally fail
+		},
+	}
+
+	errs := cfg.Validate(config.NewPath("security"))
+	if errs != nil {
+		t.Errorf("expected nil errors when security disabled, got: %v", errs)
+	}
+}
+
+func TestJWTConfig_ToJWTMiddlewareConfig_DisabledPropagation(t *testing.T) {
+	oidc := &OIDCConfig{
+		JWKSURL: "https://example.com/.well-known/jwks.json",
+	}
+	cfg := JWTConfig{}
+
+	tests := []struct {
+		securityEnabled bool
+		wantDisabled    bool
+	}{
+		{securityEnabled: true, wantDisabled: false},
+		{securityEnabled: false, wantDisabled: true},
+	}
+
+	for _, tt := range tests {
+		result := cfg.ToJWTMiddlewareConfig(oidc, nil, nil, tt.securityEnabled)
+		if result.Disabled != tt.wantDisabled {
+			t.Errorf("securityEnabled=%v: expected Disabled=%v, got %v",
+				tt.securityEnabled, tt.wantDisabled, result.Disabled)
+		}
+	}
+}
+
+func TestAuthorizationConfig_ToAuthzConfig_EnabledPropagation(t *testing.T) {
+	tests := []struct {
+		name            string
+		securityEnabled bool
+		authzEnabled    bool
+		wantEnabled     bool
+	}{
+		{name: "both enabled", securityEnabled: true, authzEnabled: true, wantEnabled: true},
+		{name: "security disabled", securityEnabled: false, authzEnabled: true, wantEnabled: false},
+		{name: "authz disabled", securityEnabled: true, authzEnabled: false, wantEnabled: false},
+		{name: "both disabled", securityEnabled: false, authzEnabled: false, wantEnabled: false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg := AuthorizationConfig{Enabled: tt.authzEnabled}
+			result := cfg.ToAuthzConfig(tt.securityEnabled)
+			if result.Enabled != tt.wantEnabled {
+				t.Errorf("expected Enabled=%v, got %v", tt.wantEnabled, result.Enabled)
 			}
 		})
 	}
