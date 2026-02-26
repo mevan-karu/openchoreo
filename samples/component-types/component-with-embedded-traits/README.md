@@ -51,7 +51,6 @@ Defines a component type that extends the default service structure with an embe
 Key features:
 
 - Uses the same resource structure as the default service component type
-- Includes the `exposed` parameter for controlling HTTPRoute creation
 - Exposes autoscaling config through ComponentType schema
 - Developers configure HPA without knowing about the underlying trait
 - **Embedded trait parameters demonstrate three patterns:**
@@ -66,7 +65,6 @@ Defines a component that:
 - Uses the `service-with-autoscaling` component type
 - Enables and configures autoscaling via ComponentType parameters (2-10 replicas)
 - Note: CPU threshold is locked by PE at 75%, not configurable by developers
-- Sets `exposed: true` to create an HTTPRoute
 - Adds a `persistent-volume` trait (from allowed list)
 
 ### Workload
@@ -111,10 +109,10 @@ kubectl get releasebinding demo-app-with-embedded-traits-development -o yaml | g
 
 ## Test the Service
 
-Once deployed, test the greeter service. The service is exposed at the base path `/{component-name}`. For this sample, the component name is `demo-app-with-embedded-traits`.
+Once deployed, test the greeter service. The service is exposed at the path `/{component-name}-{endpoint-name}`. For this sample, the component name is `demo-app-with-embedded-traits` and the endpoint name is `http`.
 
 ```bash
-curl http://development-default.openchoreoapis.localhost:19080/demo-app-with-embedded-traits/greeter/greet
+curl http://development-default.openchoreoapis.localhost:19080/demo-app-with-embedded-traits-http/greeter/greet
 ```
 
 Output:
@@ -124,7 +122,7 @@ Hello, Stranger!
 
 With a name parameter:
 ```bash
-curl "http://development-default.openchoreoapis.localhost:19080/demo-app-with-embedded-traits/greeter/greet?name=Alice"
+curl "http://development-default.openchoreoapis.localhost:19080/demo-app-with-embedded-traits-http/greeter/greet?name=Alice"
 ```
 
 Output:

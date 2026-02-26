@@ -15,7 +15,7 @@ Defines a reusable component type template for HTTP services. It:
 - Declares environment-specific overrides for resource limits
 - Templates the underlying Kubernetes resources (Deployment, Service, HTTPRoute)
 - Configures path-based routing with specific HTTP methods:
-  - `GET /{component-name}/{resource-paths}`
+  - `GET /{component-name}-{endpoint-name}/{resource-paths}`
 - Uses CEL expressions to dynamically populate values from component metadata and parameters
 
 This allows you to create multiple HTTP service components using the same template with different configurations.
@@ -73,10 +73,10 @@ kubectl get releasebinding demo-app-http-service-development -o yaml | grep -A 5
 
 ## Test the Service by invoking
 
-The service is exposed at the base path `/{component-name}`. For this sample, the component name is `demo-app-http-service`.
+The service is exposed at the path `/{component-name}-{endpoint-name}`. For this sample, the component name is `demo-app-http-service` and the endpoint name is `http`.
 
 ```bash
-curl http://development-default.openchoreoapis.localhost:19080/demo-app-http-service/greeter/greet
+curl http://development-default.openchoreoapis.localhost:19080/demo-app-http-service-http/greeter/greet
 ```
 
 Output:
@@ -85,7 +85,7 @@ Hello, Stranger!
 ```
 
 ```bash
-curl "http://development-default.openchoreoapis.localhost:19080/demo-app-http-service/greeter/greet?name=Alice"
+curl "http://development-default.openchoreoapis.localhost:19080/demo-app-http-service-http/greeter/greet?name=Alice"
 ```
 
 Output:

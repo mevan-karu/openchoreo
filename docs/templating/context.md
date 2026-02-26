@@ -240,15 +240,26 @@ workload:
     http:                               # ${workload.endpoints.http}
       type: "HTTP"                      # ${workload.endpoints.http.type}
       port: 8080                        # ${workload.endpoints.http.port}
+      basePath: "/api"                  # ${workload.endpoints.http.basePath} (optional, default "/")
+      visibility: ["project", "external"] # ${workload.endpoints.http.visibility}
       schema:                           # ${workload.endpoints.http.schema} (optional)
         type: "openapi"
         content: "..."
     grpc:
       type: "gRPC"
       port: 9090
+      visibility: ["project"]           # project visibility only - no gateway routes created
 ```
 
 **Endpoint types:** HTTP, REST, gRPC, GraphQL, Websocket, TCP, UDP
+
+**Endpoint visibility:** Endpoints always include `"project"` visibility. Additional scopes — `"external"` and `"internal"` — determine which gateway HTTPRoutes are created:
+
+| Visibility scope | Effect |
+|-----------------|--------|
+| `project` | Always present; endpoint is reachable within the project namespace (no gateway route) |
+| `external` | Creates an HTTPRoute on the external ingress gateway |
+| `internal` | Creates an HTTPRoute on the internal ingress gateway |
 
 **Example usage:**
 
@@ -263,7 +274,79 @@ spec:
           args: ${workload.container.args}
 ```
 
-**Iterating over endpoints:**
+**Iterating over endpoints by visibility (recommended pattern for HTTPRoute generation):**
+
+```yaml
+# Create HTTPRoutes only for endpoints with external visibility
+- id: httproute-external
+  forEach: '${workload.endpoints.transformList(name, ep, ("external" in ep.visibility && ep.type in ["HTTP", "REST", "GraphQL", "Websocket"]) ? [name] : []).flatten()}'
+  var: endpoint
+  template:
+    apiVersion: gateway.networking.k8s.io/v1
+    kind: HTTPRoute
+    metadata:
+      name: ${oc_generate_name(metadata.componentName, endpoint)}
+      namespace: ${metadata.namespace}
+      labels: '${oc_merge(metadata.labels, {"openchoreo.dev/endpoint-name": endpoint, "openchoreo.dev/endpoint-visibility": "external"})}'
+    spec:
+      parentRefs:
+        - name: ${gateway.ingress.external.name}
+          namespace: ${gateway.ingress.external.namespace}
+      hostnames: |
+        ${[gateway.ingress.external.?http, gateway.ingress.external.?https]
+          .filter(g, g.hasValue()).map(g, g.value().host).distinct()
+          .map(h, metadata.environmentName + "-" + metadata.componentNamespace + "." + h)}
+      rules:
+      - matches:
+        - path:
+            type: PathPrefix
+            value: /${metadata.componentName}-${endpoint}
+        filters:
+          - type: URLRewrite
+            urlRewrite:
+              path:
+                type: ReplacePrefixMatch
+                replacePrefixMatch: '${workload.endpoints[endpoint].?basePath.orValue("") != "" ? workload.endpoints[endpoint].?basePath.orValue("") : "/"}'
+        backendRefs:
+        - name: ${metadata.componentName}
+          port: ${workload.endpoints[endpoint].port}
+
+# Create HTTPRoutes only for endpoints with internal visibility
+- id: httproute-internal
+  forEach: '${workload.endpoints.transformList(name, ep, ("internal" in ep.visibility && ep.type in ["HTTP", "REST", "GraphQL", "Websocket"]) ? [name] : []).flatten()}'
+  var: endpoint
+  template:
+    apiVersion: gateway.networking.k8s.io/v1
+    kind: HTTPRoute
+    metadata:
+      name: '${oc_generate_name(metadata.componentName, endpoint, "internal")}'
+      namespace: ${metadata.namespace}
+      labels: '${oc_merge(metadata.labels, {"openchoreo.dev/endpoint-name": endpoint, "openchoreo.dev/endpoint-visibility": "internal"})}'
+    spec:
+      parentRefs:
+        - name: ${gateway.ingress.internal.name}
+          namespace: ${gateway.ingress.internal.namespace}
+      hostnames: |
+        ${[gateway.ingress.internal.?http, gateway.ingress.internal.?https]
+          .filter(g, g.hasValue()).map(g, g.value().host).distinct()
+          .map(h, metadata.environmentName + "-" + metadata.componentNamespace + "." + h)}
+      rules:
+      - matches:
+        - path:
+            type: PathPrefix
+            value: /${metadata.componentName}-${endpoint}
+        filters:
+          - type: URLRewrite
+            urlRewrite:
+              path:
+                type: ReplacePrefixMatch
+                replacePrefixMatch: '${workload.endpoints[endpoint].?basePath.orValue("") != "" ? workload.endpoints[endpoint].?basePath.orValue("") : "/"}'
+        backendRefs:
+        - name: ${metadata.componentName}
+          port: ${workload.endpoints[endpoint].port}
+```
+
+**Iterating over all endpoints (generic pattern):**
 
 ```yaml
 # Using transformList to convert endpoints map to list of ports

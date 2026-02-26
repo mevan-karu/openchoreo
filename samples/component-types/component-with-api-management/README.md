@@ -8,7 +8,7 @@ This example shows a simple approach to adding API management where:
 - The Component uses the default **deployment/service** ComponentType
 - The **api-configuration trait** is added to enable API management features
 - When the trait is applied, traffic is routed through the API Platform Gateway instead of directly to the service
-- The Component must set `exposed: true` to create an HTTPRoute that the trait can patch
+- The Component's Workload must define an endpoint with `external` visibility to create the HTTPRoute that the trait can patch
 
 ## Installation
 
@@ -52,7 +52,7 @@ You should see three running pods: the controller, policy engine, and router.
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│ Without API Management (default service type with exposed=true) │
+│ Without API Management (default service type, external visibility) │
 │                                                                  │
 │  Gateway HTTPRoute ──────────────▶ Component Service            │
 │  (gateway-default)                 (ClusterIP)                  │
@@ -82,7 +82,7 @@ You should see three running pods: the controller, policy engine, and router.
 The Component uses the standard `deployment/service` ComponentType which:
 - Creates a Deployment for running containers
 - Creates a Service to expose the deployment as a ClusterIP service
-- Creates an HTTPRoute (when `exposed: true`) to route ingress traffic to the service
+- Creates HTTPRoutes for endpoints with `external` or `internal` visibility to route ingress traffic to the service
 
 By default, the HTTPRoute routes traffic **directly** to the component service.
 
@@ -150,6 +150,8 @@ traitOverrides:
 
 ### Basic HTTP Service (No API Management)
 
+Define a Component using the `deployment/service` ComponentType and a Workload with an endpoint that has `external` visibility. The ComponentType creates the Deployment, Service, and HTTPRoute automatically:
+
 ```yaml
 apiVersion: openchoreo.dev/v1alpha1
 kind: Component
@@ -160,17 +162,34 @@ spec:
   componentType:
     kind: ComponentType
     name: deployment/service
-  parameters:
-    exposed: true
+---
+apiVersion: openchoreo.dev/v1alpha1
+kind: Workload
+metadata:
+  name: my-http-service-workload
+  namespace: default
+spec:
+  owner:
+    componentName: my-http-service
+    projectName: default
+  endpoints:
+    http:
+      type: REST
+      port: 8080
+      visibility: [external]   # causes the ComponentType to create an external HTTPRoute
+  container:
+    image: "myregistry/my-http-service:latest"
 ```
 
-This creates a basic HTTP service accessible at the base path `/{component-name}`:
-```
-https://{environment}-{componentNamespace}.{publicVirtualHost}/{component-name}
+This creates an external HTTPRoute at the path `/{component-name}-{endpoint-name}`:
+```text
+https://{environment}-{componentNamespace}.{externalHost}/{component-name}-http
 ```
 
 ### HTTP Service with API Management
 
+Add the `api-configuration` trait to the Component. The Workload still needs `external` visibility on the endpoint so that an HTTPRoute exists for the trait to patch:
+
 ```yaml
 apiVersion: openchoreo.dev/v1alpha1
 kind: Component
@@ -181,8 +200,6 @@ spec:
   componentType:
     kind: ComponentType
     name: deployment/service
-  parameters:
-    exposed: true  # Required for HTTPRoute creation
 
   # Add API management by applying the trait
   traits:
@@ -201,11 +218,28 @@ spec:
         policies:
           - name: JwtAuthentication
             version: v0.1.0
+---
+apiVersion: openchoreo.dev/v1alpha1
+kind: Workload
+metadata:
+  name: my-http-service-workload
+  namespace: default
+spec:
+  owner:
+    componentName: my-http-service
+    projectName: default
+  endpoints:
+    http:
+      type: REST
+      port: 8080
+      visibility: [external]   # required: the trait patches this HTTPRoute
+  container:
+    image: "myregistry/my-http-service:latest"
 ```
 
-This creates an HTTP service with API management enabled, accessible at the base path `/{component-name}`:
-```
-https://{environment}-{componentNamespace}.{publicVirtualHost}/{component-name}
+This creates an HTTP service with API management enabled, accessible at the base path `/{component-name}-http`:
+```text
+https://{environment}-{componentNamespace}.{externalHost}/{component-name}-http
 ```
 
 Traffic flows through the API Platform Gateway which:
@@ -289,20 +323,20 @@ Response:
 
 2. **Access the API** with the Bearer token:
 
-The service is exposed at the base path `/{component-name}`. For this sample, the component name is `demo-app-http-service`.
+The service is exposed at the path `/{component-name}-{endpoint-name}`. For this sample, the component name is `demo-app-http-service` and the endpoint name is `http`.
 
 ```bash
 # Export the token
 export TOKEN="<access_token_from_previous_response>"
 
-# Call the API (base path is /{component-name})
-curl http://development-default.openchoreoapis.localhost:19080/demo-app-http-service/greeter/greet -kv \
+# Call the API (path is /{component-name}-{endpoint-name})
+curl http://development-default.openchoreoapis.localhost:19080/demo-app-http-service-http/greeter/greet -kv \
   -H "Authorization: Bearer ${TOKEN}"
 ```
 
 The API Platform Gateway will:
 - Validate the JWT token
-- Rewrite the path from `/{component-name}` to `/greeter-api/v1.0`
+- Rewrite the path from `/{component-name}-http` to `/greeter-api/v1.0`
 - Route the request to the backend service
 - Return the response from the greeter service
 
@@ -340,4 +374,4 @@ helm upgrade openchoreo-data-plane oci://ghcr.io/openchoreo/helm-charts/openchor
 - The upstream URL in RestApi includes the full service FQDN with namespace
 - JWT authentication requires proper token configuration in the ThunderKeyManager
 - The `operations` parameter has sensible defaults (all HTTP methods on /*) for quick prototyping
-- The Component **must** set `exposed: true` to create the HTTPRoute that the trait patches
+- The Workload **must** define an endpoint with `external` visibility to create the HTTPRoute that the trait patches

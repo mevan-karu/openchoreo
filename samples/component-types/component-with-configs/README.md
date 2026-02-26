@@ -16,7 +16,6 @@ Defines a reusable component type template based on the default `deployment/serv
   - Allowed traits (api-configuration, observability-alert-rule)
   - Validation rules for service endpoints
 - Defines a schema with:
-  - Parameters: `exposed` (boolean) to control HTTPRoute creation
   - Environment-specific overrides: `replicas`, `resources`, `imagePullPolicy`
 - Templates the underlying Kubernetes resources (Deployment, Service, HTTPRoute, ConfigMaps, ExternalSecrets)
 - Automatically creates ConfigMaps for environment variables and file mounts
@@ -79,7 +78,7 @@ This sample demonstrates the comprehensive configuration capabilities available 
 
 1. **ComponentType** acts as a template/blueprint that handles configurations and includes:
    - Standard Deployment and Service resources
-   - HTTPRoute for external access (when `exposed: true`)
+   - HTTPRoute resources for endpoints with `external` or `internal` visibility
    - Automatic ConfigMap creation for environment variables and files
    - Automatic ExternalSecret creation for secret environment variables and files
 2. **SecretReference** defines how to fetch secrets from external secret stores

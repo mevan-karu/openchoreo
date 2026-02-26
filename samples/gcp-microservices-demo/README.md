@@ -76,7 +76,7 @@ This will deploy all the microservices using official Google Container Registry 
 Access the frontend application in your browser:
 
 ```
-http://frontend-development-default.openchoreoapis.localhost:19080
+http://http-frontend-development-default-4cc7110c.openchoreoapis.localhost:19080
 ```
 
 > [!TIP]

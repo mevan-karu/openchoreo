@@ -246,6 +246,63 @@ name: ${oc_generate_name(metadata.name, "-", spec.version)}
 `,
 		},
 		{
+			name: "oc_dns_label with single argument",
+			template: `
+name: ${oc_dns_label("Hello World!")}
+`,
+			inputs: `{}`,
+			want: `name: hello-world-7f83b165
+`,
+		},
+		{
+			name: "oc_dns_label with multiple arguments",
+			template: `
+name: ${oc_dns_label("my-app", "v1.2.3")}
+`,
+			inputs: `{}`,
+			want: `name: my-app-v1.2.3-4f878dd8
+`,
+		},
+		{
+			name: "oc_dns_label truncates to 63 characters",
+			template: `
+name: ${oc_dns_label("very-long-endpoint-name", "very-long-component-name", "very-long-env-name")}
+`,
+			inputs: `{}`,
+			want: `name: very-long-endpoint-very-long-compone-very-long-env-nam-23ab5d45
+`,
+		},
+		{
+			name: "oc_dns_label with list argument",
+			template: `
+name: ${oc_dns_label(["http", "my-service", "prod", "default"])}
+`,
+			inputs: `{}`,
+			want: `name: http-my-service-prod-default-800d0dd2
+`,
+		},
+		{
+			name: "oc_dns_label with dynamic values",
+			template: `
+name: ${oc_dns_label(metadata.endpointName, metadata.componentName, spec.environment)}
+`,
+			inputs: `{
+  "metadata": {"endpointName": "http", "componentName": "payment-service"},
+  "spec": {"environment": "prod"}
+}`,
+			want: `name: http-payment-service-prod-779ef0c2
+`,
+		},
+		{
+			name: "oc_dns_label with special characters",
+			template: `
+name: ${oc_dns_label("My App!")}
+`,
+			inputs: `{}`,
+			want: `name: my-app-6e06c02a
+`,
+		},
+		{
 			name: "list transformation with map comprehension",
 			template: `
 env: '${parameters.envVars.map(e, {"name": e.key, "value": e.value})}'

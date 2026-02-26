@@ -336,7 +336,7 @@ config: ${oc_merge(defaults, layer1, layer2, layer3)}
 ```
 
 ### oc_generate_name(...args)
-Convert arguments to valid Kubernetes resource names with a hash suffix for uniqueness:
+Convert arguments to valid Kubernetes resource names (max 253 chars) with a hash suffix for uniqueness:
 
 ```yaml
 # Create valid ConfigMap name with hash
@@ -353,6 +353,18 @@ name: ${oc_generate_name("Hello World!")}
 ```
 
 **Note:** The function always appends an 8-character hash suffix to ensure uniqueness. The hash is generated from the original input values, so the same inputs will always produce the same output.
+
+### oc_dns_label(...args)
+Same as `oc_generate_name` but enforces a 63-character limit, suitable for DNS label names (e.g., hostname subdomains in HTTPRoute). The hash suffix still guarantees uniqueness even after truncation:
+
+```yaml
+# Generate a hostname subdomain label (≤63 chars) for webapp HTTPRoutes
+hostnames:
+  - ${oc_dns_label(endpointName, metadata.componentName, metadata.environmentName, metadata.componentNamespace)}.${gateway.ingress.external.https.host}
+# Result subdomain: "my-endpoint-my-service-dev-a1b2c3d4" (truncated to ≤63 chars if needed)
+```
+
+Use `oc_dns_label` when the name appears as a hostname subdomain (RFC 1123 label, max 63 chars). Use `oc_generate_name` for all other Kubernetes resource names.
 
 ## OpenChoreo Resource Control Fields
 

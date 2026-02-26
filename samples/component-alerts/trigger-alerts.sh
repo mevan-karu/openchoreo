@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-FRONTEND_URL="http://frontend-development-default.openchoreoapis.localhost:19080"
+FRONTEND_URL="http://http-frontend-development-default-4cc7110c.openchoreoapis.localhost:19080"
 
 echo "Starting loop to invoke frontend URL: ${FRONTEND_URL}"
 echo "Press Ctrl+C to stop."

@@ -100,7 +100,9 @@ func (o *omitCELValue) Value() interface{} {
 //
 // oc_merge(map1, map2, ...mapN) - Shallow merge of multiple maps
 //
-// oc_generate_name(...strings) - Generate valid Kubernetes resource names
+// oc_generate_name(...strings) - Generate valid Kubernetes resource names (≤253 chars)
+//
+// oc_dns_label(...strings) - Generate valid Kubernetes DNS label names (≤63 chars)
 //
 // oc_hash(string) - Generate 8-character hash from input string
 //
@@ -171,6 +173,15 @@ func (o *omitCELValue) Value() interface{} {
 //	oc_generate_name("my-app")   -> "my-app-abc12345"
 //	oc_generate_name("My App!")  -> "my-app-def67890"  # Different hash
 //
+// # oc_dns_label() - Kubernetes DNS Label Name Generation
+//
+// Same as oc_generate_name() but enforces a ≤63 character limit, suitable for
+// Kubernetes DNS label names (e.g., hostname subdomain labels).
+//
+//	# Webapp hostname subdomain (≤63 chars)
+//	hostnames:
+//	  - ${oc_dns_label(endpointName, metadata.componentName, metadata.environmentName, metadata.componentNamespace)}.example.com
+//
 // # oc_hash() - String Hashing
 //
 // Generates an 8-character hexadecimal hash from an input string using the FNV-32a
@@ -184,7 +195,7 @@ func (o *omitCELValue) Value() interface{} {
 // All custom functions use the "oc_" prefix to avoid potential conflicts with upstream CEL-go.
 func CustomFunctions() []cel.EnvOption {
 	return []cel.EnvOption{
-		cel.Macros(generateNameMacro, mergeMacro),
+		cel.Macros(generateNameMacro, dnslabelMacro, mergeMacro),
 		cel.Function("oc_omit",
 			cel.Overload("oc_omit", []*cel.Type{}, cel.DynType,
 				cel.FunctionBinding(func(values ...ref.Val) ref.Val {
@@ -211,6 +222,20 @@ func CustomFunctions() []cel.EnvOption {
 				[]*cel.Type{cel.ListType(cel.StringType)},
 				cel.StringType,
 				cel.UnaryBinding(generateK8sName),
+			),
+		),
+		cel.Function("oc_dns_label",
+			cel.Overload("oc_dns_label_string",
+				[]*cel.Type{cel.StringType},
+				cel.StringType,
+				cel.UnaryBinding(func(arg ref.Val) ref.Val {
+					return generateK8sDNSLabelFromStrings([]string{arg.Value().(string)})
+				}),
+			),
+			cel.Overload("oc_dns_label_list",
+				[]*cel.Type{cel.ListType(cel.StringType)},
+				cel.StringType,
+				cel.UnaryBinding(generateK8sDNSLabel),
 			),
 		),
 		cel.Function("oc_hash",
@@ -287,6 +312,34 @@ func generateK8sNameFromStrings(parts []string) ref.Val {
 	return types.String(result)
 }
 
+func generateK8sDNSLabelFromStrings(parts []string) ref.Val {
+	result := kubernetes.GenerateK8sNameWithLengthLimit(kubernetes.MaxLabelNameLength, parts...)
+	return types.String(result)
+}
+
+// generateK8sDNSLabel is the CEL binding for oc_dns_label().
+// Same as generateK8sName but enforces a ≤63 character limit.
+func generateK8sDNSLabel(arg ref.Val) ref.Val {
+	parts := []string{}
+	switch v := arg.Value().(type) {
+	case string:
+		parts = append(parts, v)
+	case []ref.Val:
+		for _, item := range v {
+			if str, ok := item.Value().(string); ok {
+				parts = append(parts, str)
+			}
+		}
+	case []any:
+		for _, item := range v {
+			if str, ok := item.(string); ok {
+				parts = append(parts, str)
+			}
+		}
+	}
+	return generateK8sDNSLabelFromStrings(parts)
+}
+
 // generateK8sName is the CEL binding for oc_generate_name().
 //
 // Handles multiple input formats (single string, array, variadic via macro).
@@ -340,6 +393,20 @@ var generateNameMacro = cel.GlobalVarArgMacro("oc_generate_name",
 		default:
 			// Multiple args: wrap in list for function to process
 			return eh.NewCall("oc_generate_name", eh.NewList(args...)), nil
+		}
+	})
+
+// dnslabelMacro enables variadic syntax for oc_dns_label in templates.
+// Same expansion logic as generateNameMacro but targets oc_dns_label.
+var dnslabelMacro = cel.GlobalVarArgMacro("oc_dns_label",
+	func(eh parser.ExprHelper, target ast.Expr, args []ast.Expr) (ast.Expr, *common.Error) {
+		switch len(args) {
+		case 0:
+			return eh.NewCall("oc_dns_label", eh.NewList()), nil
+		case 1:
+			return nil, nil
+		default:
+			return eh.NewCall("oc_dns_label", eh.NewList(args...)), nil
 		}
 	})
 
