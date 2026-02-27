@@ -3,6 +3,8 @@ kind: ComponentType
 metadata:
   name: worker
   namespace: default
+  annotations:
+    openchoreo.dev/description: "Component type for background workers"
 spec:
   workloadType: deployment
 

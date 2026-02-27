@@ -3,6 +3,8 @@ kind: ComponentType
 metadata:
   name: scheduled-task
   namespace: default
+  annotations:
+    openchoreo.dev/description: "Component type for scheduled tasks"
 spec:
   workloadType: cronjob
 

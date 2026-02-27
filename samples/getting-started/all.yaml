@@ -103,6 +103,8 @@ kind: ComponentType
 metadata:
   name: worker
   namespace: default
+  annotations:
+    openchoreo.dev/description: "Component type for background workers"
 spec:
   workloadType: deployment
 
@@ -247,6 +249,8 @@ kind: ComponentType
 metadata:
   name: service
   namespace: default
+  annotations:
+    openchoreo.dev/description: "Component type for backend services that expose HTTP endpoints"
 spec:
   workloadType: deployment
 
@@ -470,6 +474,8 @@ kind: ComponentType
 metadata:
   name: web-application
   namespace: default
+  annotations:
+    openchoreo.dev/description: "Component type for web applications"
 spec:
   workloadType: deployment
 
@@ -673,6 +679,8 @@ kind: ComponentType
 metadata:
   name: scheduled-task
   namespace: default
+  annotations:
+    openchoreo.dev/description: "Component type for scheduled tasks"
 spec:
   workloadType: cronjob
 

@@ -3,6 +3,8 @@ kind: ComponentType
 metadata:
   name: service
   namespace: default
+  annotations:
+    openchoreo.dev/description: "Component type for backend services that expose HTTP endpoints"
 spec:
   workloadType: deployment
 

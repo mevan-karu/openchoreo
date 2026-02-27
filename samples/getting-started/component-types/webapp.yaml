@@ -3,6 +3,8 @@ kind: ComponentType
 metadata:
   name: web-application
   namespace: default
+  annotations:
+    openchoreo.dev/description: "Component type for web applications"
 spec:
   workloadType: deployment
 
