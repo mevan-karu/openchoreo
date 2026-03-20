@@ -24,6 +24,12 @@
               "title": "clientId",
               "type": "string"
             },
+            "oidcScope": {
+              "default": "openid profile email",
+              "description": "Space-separated OIDC scopes for the OIDC provider (e.g. 'openid profile email')",
+              "title": "oidcScope",
+              "type": "string"
+            },
             "redirectUrls": {
               "default": [],
               "description": "OAuth redirect URLs",
@@ -32,6 +38,12 @@
               },
               "title": "redirectUrls",
               "type": "array"
+            },
+            "scope": {
+              "default": "",
+              "description": "Space-separated scopes for the OpenChoreo service token authenticator (e.g. 'openid' or 'api://client-id/.default openid')",
+              "title": "scope",
+              "type": "string"
             }
           },
           "required": [],

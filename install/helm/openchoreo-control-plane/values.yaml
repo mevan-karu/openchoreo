@@ -2362,6 +2362,18 @@ backstage:
     # @schema
     clientId: "openchoreo-backstage-client"
     # @schema
+    # type: string
+    # description: Space-separated OIDC scopes for the OIDC provider (e.g. 'openid profile email')
+    # default: "openid profile email"
+    # @schema
+    oidcScope: "openid profile email"
+    # @schema
+    # type: string
+    # description: Space-separated scopes for the OpenChoreo service token authenticator (e.g. 'openid' or 'api://client-id/.default openid')
+    # default: ""
+    # @schema
+    scope: ""
+    # @schema
     # type: array
     # description: OAuth redirect URLs
     # items:

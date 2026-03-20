@@ -93,6 +93,12 @@ spec:
             secretKeyRef:
               name: {{ .Values.backstage.secretName }}
               key: client-secret
+        - name: OPENCHOREO_AUTH_OIDC_SCOPE
+          value: {{ .Values.backstage.auth.oidcScope | quote }}
+        {{- if .Values.backstage.auth.scope }}
+        - name: OPENCHOREO_AUTH_SCOPE
+          value: {{ .Values.backstage.auth.scope | quote }}
+        {{- end }}
         # Feature flags for OpenChoreo functionality
         - name: OPENCHOREO_FEATURES_WORKFLOWS_ENABLED
           value: {{ .Values.backstage.features.workflows.enabled | quote }}
