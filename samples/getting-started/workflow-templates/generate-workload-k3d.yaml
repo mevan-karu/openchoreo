@@ -79,7 +79,7 @@ spec:
               echo ">> Generating workload CR from workload descriptor"
               podman run --rm --network=none \
               -v $DESCRIPTOR_PATH:/app:rw -w /app \
-              ghcr.io/openchoreo/openchoreo-cli:latest-dev \
+              ghcr.io/openchoreo/openchoreo-cli:v1.0.0 \
                 workload create \
                 --namespace "${NAMESPACE_NAME}" \
                 --project "${PROJECT_NAME}" \
@@ -91,7 +91,7 @@ spec:
               echo ">> Generating default workload CR"
               podman run --rm --network=none \
               -v $DESCRIPTOR_PATH:/app:rw -w /app \
-              ghcr.io/openchoreo/openchoreo-cli:latest-dev \
+              ghcr.io/openchoreo/openchoreo-cli:v1.0.0 \
                 workload create \
                 --namespace "${NAMESPACE_NAME}" \
                 --project "${PROJECT_NAME}" \
