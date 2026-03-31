@@ -5,11 +5,14 @@ package casbin
 
 import (
 	"context"
+	"io"
 	"log/slog"
 	"os"
 	"sync"
 	"testing"
+	"time"
 
+	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
@@ -1397,4 +1400,240 @@ func TestCasbinEnforcer_Evaluate_ScopedClusterBinding(t *testing.T) {
 			}
 		})
 	}
+}
+
+// =============================================================================
+// enforcer.go coverage
+// =============================================================================
+
+func TestNewEnforcer_NilClient(t *testing.T) {
+	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
+	_, err := NewEnforcer(context.Background(), CasbinConfig{K8sClient: nil}, logger)
+	require.Error(t, err, "NewEnforcer() with nil K8sClient should return error")
+}
+
+func TestNewEnforcer_WithCache(t *testing.T) {
+	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
+	ce := setupTestEnforcer(t) // reuse the fake client from the shared helper
+	enforcer, err := NewEnforcer(context.Background(), CasbinConfig{
+		K8sClient:    ce.k8sClient,
+		CacheEnabled: true,
+		CacheTTL:     time.Minute,
+	}, logger)
+	require.NoError(t, err, "NewEnforcer() with cache error")
+	require.True(t, enforcer.enableCache, "NewEnforcer() with CacheEnabled=true should set enableCache=true")
+	require.Equal(t, int(time.Minute), enforcer.cacheTTL, "NewEnforcer() cacheTTL mismatch")
+}
+
+func TestNewEnforcer_WithCacheDefaultTTL(t *testing.T) {
+	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
+	ce := setupTestEnforcer(t)
+	// CacheTTL=0 should use the default (5m)
+	enforcer, err := NewEnforcer(context.Background(), CasbinConfig{
+		K8sClient:    ce.k8sClient,
+		CacheEnabled: true,
+		CacheTTL:     0,
+	}, logger)
+	require.NoError(t, err, "NewEnforcer() with zero TTL error")
+	require.True(t, enforcer.enableCache, "NewEnforcer() with CacheEnabled=true should set enableCache=true")
+	require.Equal(t, int(5*time.Minute), enforcer.cacheTTL, "NewEnforcer() cacheTTL should use 5m default")
+}
+
+func TestCasbinEnforcer_GetEnforcer(t *testing.T) {
+	ce := setupTestEnforcer(t)
+	e := ce.GetEnforcer()
+	require.NotNil(t, e, "GetEnforcer() returned nil")
+}
+
+// =============================================================================
+// pdp.go coverage — validation errors, context cancellation, resource ID in reason
+// =============================================================================
+
+func TestCasbinEnforcer_Evaluate_NilRequest(t *testing.T) {
+	enforcer := setupTestEnforcer(t)
+	_, err := enforcer.Evaluate(context.Background(), nil)
+	require.Error(t, err, "Evaluate(nil) should return error")
+}
+
+func TestCasbinEnforcer_BatchEvaluate_NilRequest(t *testing.T) {
+	enforcer := setupTestEnforcer(t)
+	_, err := enforcer.BatchEvaluate(context.Background(), nil)
+	require.Error(t, err, "BatchEvaluate(nil) should return error")
+}
+
+func TestCasbinEnforcer_BatchEvaluate_ContextCancelled(t *testing.T) {
+	enforcer := setupTestEnforcer(t)
+
+	// Pre-seed a policy so the first request succeeds
+	syncGroupingPolicies(t, enforcer, [][]string{
+		{"viewer", "component:view", "*"},
+	})
+	syncPolicies(t, enforcer, [][]string{
+		{"groups:devs", "*", "viewer", "*", "allow", "{}", "binding-ctx"},
+	})
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel() // cancel immediately
+
+	req := &authzcore.BatchEvaluateRequest{
+		Requests: []authzcore.EvaluateRequest{
+			{
+				SubjectContext: &authzcore.SubjectContext{
+					Type:              "user",
+					EntitlementClaim:  "groups",
+					EntitlementValues: []string{"devs"},
+				},
+				Resource: authzcore.Resource{Type: "component"},
+				Action:   "component:view",
+			},
+		},
+	}
+
+	_, err := enforcer.BatchEvaluate(ctx, req)
+	require.Error(t, err, "BatchEvaluate with cancelled context should return error")
+}
+
+func TestCasbinEnforcer_GetSubjectProfile_MissingSubjectContext(t *testing.T) {
+	enforcer := setupTestEnforcer(t)
+	// Pass a non-nil request with nil SubjectContext; validateProfileRequest will return an error.
+	_, err := enforcer.GetSubjectProfile(context.Background(), &authzcore.ProfileRequest{
+		SubjectContext: nil,
+	})
+	require.Error(t, err, "GetSubjectProfile with nil SubjectContext should return error")
+}
+
+func TestCasbinEnforcer_Check_NilSubjectContext(t *testing.T) {
+	enforcer := setupTestEnforcer(t)
+	// Call check directly to exercise the nil subjectCtx guard
+	decision, err := enforcer.check(&authzcore.EvaluateRequest{
+		SubjectContext: nil,
+		Resource:       authzcore.Resource{Type: "component"},
+		Action:         "component:view",
+	})
+	require.Error(t, err, "check with nil SubjectContext should return error")
+	require.NotNil(t, decision, "check with nil SubjectContext should return a decision")
+	require.False(t, decision.Decision, "check with nil SubjectContext should return deny decision")
+}
+
+func TestCasbinEnforcer_FilterPolicies_MalformedPolicy(t *testing.T) {
+	enforcer := setupTestEnforcer(t)
+
+	subjectCtx := &authzcore.SubjectContext{
+		Type:              "user",
+		EntitlementClaim:  "groups",
+		EntitlementValues: []string{"devs"},
+	}
+
+	// Seed a valid 7-field policy and a malformed 3-field policy via the raw enforcer
+	_, _ = enforcer.enforcer.AddPolicy("groups:devs", "ns/acme", "viewer", "acme", "allow", "{}", "b1")
+	// Add a malformed policy (only 3 fields) — filterPoliciesBySubjectAndScope must skip it
+	_, _ = enforcer.enforcer.AddPolicy("groups:devs", "ns/acme", "bad")
+
+	profile, err := enforcer.GetSubjectProfile(context.Background(), &authzcore.ProfileRequest{
+		SubjectContext: subjectCtx,
+		Scope:          authzcore.ResourceHierarchy{Namespace: "acme"},
+	})
+	// The malformed policy must be skipped silently (logged as warning); no error expected
+	require.NoError(t, err, "GetSubjectProfile with malformed policy returned unexpected error")
+	require.NotNil(t, profile, "GetSubjectProfile returned nil profile")
+	// The malformed tuple has roleName "bad"; since it is skipped, no capability
+	// derived from "bad" should appear — capabilities may be empty or contain only
+	// entries from the valid policy (which itself has no grouping rules seeded here).
+	for action, cap := range profile.Capabilities {
+		for _, allowed := range cap.Allowed {
+			require.NotEqual(t, "bad", allowed.Path, "capability for action %s contains unexpected 'bad' path from malformed policy", action)
+		}
+	}
+}
+
+func TestCasbinEnforcer_Check_WithResourceID(t *testing.T) {
+	enforcer := setupTestEnforcer(t)
+
+	// Seed policies: viewer role grants component:view, bound to groups:devs on ns/acme
+	syncGroupingPolicies(t, enforcer, [][]string{
+		{"viewer", "component:view", "*"},
+	})
+	syncPolicies(t, enforcer, [][]string{
+		{"groups:devs", "ns/acme", "viewer", "*", "allow", "{}", "binding-rid"},
+	})
+
+	// Evaluate with a non-empty Resource.ID to exercise the resourceInfo branch
+	decision, err := enforcer.Evaluate(context.Background(), &authzcore.EvaluateRequest{
+		SubjectContext: &authzcore.SubjectContext{
+			Type:              "user",
+			EntitlementClaim:  "groups",
+			EntitlementValues: []string{"devs"},
+		},
+		Resource: authzcore.Resource{
+			Type: "component",
+			ID:   "comp-123", // non-empty ID
+			Hierarchy: authzcore.ResourceHierarchy{
+				Namespace: "acme",
+			},
+		},
+		Action: "component:view",
+	})
+	require.NoError(t, err, "Evaluate() error")
+	require.True(t, decision.Decision, "Evaluate() expected allow, got deny")
+	require.NotNil(t, decision.Context, "Evaluate() expected non-nil context")
+	require.NotEmpty(t, decision.Context.Reason, "Evaluate() expected non-empty reason")
+}
+
+func TestCasbinEnforcer_BatchEvaluate_CheckError(t *testing.T) {
+	enforcer := setupTestEnforcer(t)
+	req := &authzcore.BatchEvaluateRequest{
+		Requests: []authzcore.EvaluateRequest{
+			{
+				SubjectContext: &authzcore.SubjectContext{
+					Type:              "user",
+					EntitlementClaim:  "", // empty claim → formatSubject error in check()
+					EntitlementValues: []string{"devs"},
+				},
+				Resource: authzcore.Resource{Type: "component"},
+				Action:   "component:view",
+			},
+		},
+	}
+	_, err := enforcer.BatchEvaluate(context.Background(), req)
+	require.Error(t, err, "BatchEvaluate with empty EntitlementClaim should return error")
+}
+
+func TestCasbinEnforcer_GetSubjectProfile_FormatSubjectError(t *testing.T) {
+	enforcer := setupTestEnforcer(t)
+	// Empty EntitlementClaim causes formatSubject to error inside filterPoliciesBySubjectAndScope
+	_, err := enforcer.GetSubjectProfile(context.Background(), &authzcore.ProfileRequest{
+		SubjectContext: &authzcore.SubjectContext{
+			Type:              "user",
+			EntitlementClaim:  "", // empty claim
+			EntitlementValues: []string{"devs"},
+		},
+		Scope: authzcore.ResourceHierarchy{Namespace: "acme"},
+	})
+	require.Error(t, err, "GetSubjectProfile with empty EntitlementClaim should return error")
+}
+
+func TestCasbinEnforcer_GetSubjectProfile_OutOfScopePolicy(t *testing.T) {
+	enforcer := setupTestEnforcer(t)
+
+	// Seed a role and a policy for "ns/other" — unrelated to the queried scope "ns/acme"
+	syncGroupingPolicies(t, enforcer, [][]string{
+		{"viewer", "component:view", "*"},
+	})
+	syncPolicies(t, enforcer, [][]string{
+		// Policy for "ns/other" — completely outside scope "ns/acme"
+		{"groups:devs", "ns/other", "viewer", "*", "allow", "{}", "oos-binding"},
+	})
+
+	result, err := enforcer.GetSubjectProfile(context.Background(), &authzcore.ProfileRequest{
+		SubjectContext: &authzcore.SubjectContext{
+			Type:              "user",
+			EntitlementClaim:  "groups",
+			EntitlementValues: []string{"devs"},
+		},
+		Scope: authzcore.ResourceHierarchy{Namespace: "acme"}, // "ns/acme" — out-of-scope policy is skipped
+	})
+	require.NoError(t, err, "GetSubjectProfile out-of-scope error")
+	require.NotNil(t, result, "GetSubjectProfile returned nil result")
+	// The out-of-scope policy (ns/other) must not appear in capabilities for scope ns/acme
+	require.Empty(t, result.Capabilities, "expected no capabilities for out-of-scope policy")
 }

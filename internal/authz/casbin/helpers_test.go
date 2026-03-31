@@ -7,6 +7,8 @@ import (
 	"slices"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	authzcore "github.com/openchoreo/openchoreo/internal/authz/core"
 )
 
@@ -1109,4 +1111,55 @@ func sliceContainsSameElements(a, b []string) bool {
 		}
 	}
 	return true
+}
+
+func TestResourceMatchWrapper_Errors(t *testing.T) {
+	// Wrong number of args
+	_, err := resourceMatchWrapper("only-one")
+	require.Error(t, err, "resourceMatchWrapper with 1 arg should return error")
+
+	// Non-string first arg
+	_, err = resourceMatchWrapper(42, "ns/acme")
+	require.Error(t, err, "resourceMatchWrapper with non-string first arg should return error")
+
+	// Non-string second arg
+	_, err = resourceMatchWrapper("ns/acme", 42)
+	require.Error(t, err, "resourceMatchWrapper with non-string second arg should return error")
+
+	// Valid args
+	result, err := resourceMatchWrapper("ns/acme", "ns/acme")
+	require.NoError(t, err)
+	require.True(t, result.(bool), "resourceMatchWrapper exact match should be true")
+}
+
+func TestCtxMatchWrapper_Errors(t *testing.T) {
+	// Wrong number of args
+	_, err := ctxMatchWrapper("only-one")
+	require.Error(t, err, "ctxMatchWrapper with 1 arg should return error")
+
+	// Non-string first arg
+	_, err = ctxMatchWrapper(42, "{}")
+	require.Error(t, err, "ctxMatchWrapper with non-string first arg should return error")
+
+	// Non-string second arg
+	_, err = ctxMatchWrapper("{}", 42)
+	require.Error(t, err, "ctxMatchWrapper with non-string second arg should return error")
+
+	// Valid args
+	result, err := ctxMatchWrapper("{}", "{}")
+	require.NoError(t, err)
+	require.True(t, result.(bool), "ctxMatchWrapper exact match should be true")
+}
+
+func TestValidateBatchEvaluateRequest_MissingActionAtIndex(t *testing.T) {
+	validSubject := &authzcore.SubjectContext{
+		Type: "user", EntitlementClaim: "groups", EntitlementValues: []string{"devs"},
+	}
+	req := &authzcore.BatchEvaluateRequest{
+		Requests: []authzcore.EvaluateRequest{
+			{SubjectContext: validSubject, Resource: authzcore.Resource{Type: "component"}, Action: "component:view"},
+			{SubjectContext: validSubject, Resource: authzcore.Resource{Type: "component"}, Action: ""}, // missing action
+		},
+	}
+	require.Error(t, validateBatchEvaluateRequest(req), "validateBatchEvaluateRequest with empty action should return error")
 }
