@@ -46,6 +46,12 @@ var _ = BeforeSuite(func() {
 
 	ctx, cancel = context.WithCancel(context.TODO())
 
+	// Skip envtest setup when binaries are not available; unit tests calling
+	// webhook functions directly will still run.
+	if getFirstFoundEnvTestBinaryDir() == "" {
+		return
+	}
+
 	var err error
 	err = openchoreodevv1alpha1.AddToScheme(scheme.Scheme)
 	Expect(err).NotTo(HaveOccurred())
@@ -59,9 +65,7 @@ var _ = BeforeSuite(func() {
 		},
 	}
 
-	if getFirstFoundEnvTestBinaryDir() != "" {
-		testEnv.BinaryAssetsDirectory = getFirstFoundEnvTestBinaryDir()
-	}
+	testEnv.BinaryAssetsDirectory = getFirstFoundEnvTestBinaryDir()
 
 	cfg, err = testEnv.Start()
 	Expect(err).NotTo(HaveOccurred())
@@ -106,8 +110,11 @@ var _ = BeforeSuite(func() {
 })
 
 var _ = AfterSuite(func() {
-	By("tearing down the test environment")
 	cancel()
+	if testEnv == nil {
+		return
+	}
+	By("tearing down the test environment")
 	err := testEnv.Stop()
 	Expect(err).NotTo(HaveOccurred())
 })

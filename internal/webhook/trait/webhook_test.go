@@ -605,4 +605,47 @@ var _ = Describe("Trait Webhook", func() {
 			Expect(err).ToNot(HaveOccurred())
 		})
 	})
+
+	Context("Error path tests", func() {
+		It("should return error when ValidateCreate receives wrong type", func() {
+			wrongObj := &openchoreodevv1alpha1.Component{}
+			_, err := validator.ValidateCreate(ctx, wrongObj)
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring("expected a Trait object but got"))
+		})
+
+		It("should return error when ValidateUpdate receives wrong newObj type", func() {
+			wrongObj := &openchoreodevv1alpha1.Component{}
+			_, err := validator.ValidateUpdate(ctx, obj, wrongObj)
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring("expected a Trait object for the newObj but got"))
+		})
+	})
+
+	Context("ValidateDelete", func() {
+		It("should admit deletion of a valid Trait", func() {
+			_, err := validator.ValidateDelete(ctx, obj)
+			Expect(err).NotTo(HaveOccurred())
+		})
+
+		It("should return error when ValidateDelete receives wrong type", func() {
+			wrongObj := &openchoreodevv1alpha1.Component{}
+			_, err := validator.ValidateDelete(ctx, wrongObj)
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring("expected a Trait object but got"))
+		})
+	})
+
+	Context("Nil template in creates", func() {
+		It("should reject nil template in creates", func() {
+			obj.Spec.Creates = []openchoreodevv1alpha1.TraitCreate{
+				{
+					Template: nil,
+				},
+			}
+			_, err := validator.ValidateCreate(ctx, obj)
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring("template is required"))
+		})
+	})
 })
