@@ -1184,4 +1184,102 @@ var _ = Describe("ComponentType Webhook", func() {
 			Expect(err).ToNot(HaveOccurred())
 		})
 	})
+
+	Context("allowedWorkflows validation", func() {
+		BeforeEach(func() {
+			obj.Spec.WorkloadType = workloadTypeDeployment
+			obj.Spec.Resources = []openchoreodevv1alpha1.ResourceTemplate{
+				{
+					ID: workloadTypeDeployment,
+					Template: &runtime.RawExtension{
+						Raw: []byte(`{"apiVersion":"apps/v1","kind":"Deployment","metadata":{"name":"test"}}`),
+					},
+				},
+			}
+		})
+
+		It("should admit valid allowedWorkflows", func() {
+			obj.Spec.AllowedWorkflows = []openchoreodevv1alpha1.WorkflowRef{
+				{Kind: openchoreodevv1alpha1.WorkflowRefKindWorkflow, Name: "build"},
+				{Kind: openchoreodevv1alpha1.WorkflowRefKindClusterWorkflow, Name: "deploy"},
+			}
+			_, err := validator.ValidateCreate(ctx, obj)
+			Expect(err).ToNot(HaveOccurred())
+		})
+
+		It("should reject empty workflow name in allowedWorkflows", func() {
+			obj.Spec.AllowedWorkflows = []openchoreodevv1alpha1.WorkflowRef{
+				{Kind: openchoreodevv1alpha1.WorkflowRefKindWorkflow, Name: ""},
+			}
+			_, err := validator.ValidateCreate(ctx, obj)
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring("must not be empty"))
+		})
+
+		It("should reject duplicate workflow by kind:name", func() {
+			obj.Spec.AllowedWorkflows = []openchoreodevv1alpha1.WorkflowRef{
+				{Kind: openchoreodevv1alpha1.WorkflowRefKindWorkflow, Name: "build"},
+				{Kind: openchoreodevv1alpha1.WorkflowRefKindWorkflow, Name: "build"},
+			}
+			_, err := validator.ValidateCreate(ctx, obj)
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring("Duplicate"))
+		})
+
+		It("should allow same name with different kinds in allowedWorkflows", func() {
+			obj.Spec.AllowedWorkflows = []openchoreodevv1alpha1.WorkflowRef{
+				{Kind: openchoreodevv1alpha1.WorkflowRefKindWorkflow, Name: "build"},
+				{Kind: openchoreodevv1alpha1.WorkflowRefKindClusterWorkflow, Name: "build"},
+			}
+			_, err := validator.ValidateCreate(ctx, obj)
+			Expect(err).ToNot(HaveOccurred())
+		})
+
+		It("should default empty Kind to Workflow when checking duplicates", func() {
+			obj.Spec.AllowedWorkflows = []openchoreodevv1alpha1.WorkflowRef{
+				{Name: "build"},
+				{Kind: openchoreodevv1alpha1.WorkflowRefKindWorkflow, Name: "build"},
+			}
+			_, err := validator.ValidateCreate(ctx, obj)
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring("Duplicate"))
+		})
+	})
+
+	Context("ValidateDelete", func() {
+		It("should admit deletion of a valid ComponentType", func() {
+			_, err := validator.ValidateDelete(ctx, obj)
+			Expect(err).NotTo(HaveOccurred())
+		})
+
+		It("should return an error when given a non-ComponentType object", func() {
+			wrongObj := &openchoreodevv1alpha1.ClusterComponentType{}
+			_, err := validator.ValidateDelete(ctx, wrongObj)
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring("expected a ComponentType object"))
+		})
+	})
+
+	Context("ValidateCreate and ValidateUpdate wrong type errors", func() {
+		It("should return an error when ValidateCreate receives a non-ComponentType object", func() {
+			wrongObj := &openchoreodevv1alpha1.ClusterComponentType{}
+			_, err := validator.ValidateCreate(ctx, wrongObj)
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring("expected a ComponentType object"))
+		})
+
+		It("should return an error when ValidateUpdate oldObj is not a ComponentType", func() {
+			wrongObj := &openchoreodevv1alpha1.ClusterComponentType{}
+			_, err := validator.ValidateUpdate(ctx, wrongObj, obj)
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring("expected a ComponentType object for the oldObj"))
+		})
+
+		It("should return an error when ValidateUpdate newObj is not a ComponentType", func() {
+			wrongObj := &openchoreodevv1alpha1.ClusterComponentType{}
+			_, err := validator.ValidateUpdate(ctx, oldObj, wrongObj)
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring("expected a ComponentType object for the newObj"))
+		})
+	})
 })

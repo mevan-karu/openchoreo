@@ -73,13 +73,8 @@ func (v *Validator) ValidateUpdate(_ context.Context, oldObj, newObj runtime.Obj
 }
 
 // ValidateDelete implements webhook.CustomValidator so a webhook will be registered for the type ClusterWorkflow.
-func (v *Validator) ValidateDelete(_ context.Context, obj runtime.Object) (admission.Warnings, error) {
-	cwf, ok := obj.(*openchoreodevv1alpha1.ClusterWorkflow)
-	if !ok {
-		return nil, fmt.Errorf("expected a ClusterWorkflow object but got %T", obj)
-	}
-	clusterworkflowlog.Info("Validation for ClusterWorkflow upon deletion", "name", cwf.GetName())
-
+// Deletion webhooks are not used for ClusterWorkflow (verbs=create;update only).
+func (v *Validator) ValidateDelete(_ context.Context, _ runtime.Object) (admission.Warnings, error) {
 	return nil, nil
 }
 
