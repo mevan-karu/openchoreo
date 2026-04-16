@@ -306,6 +306,9 @@ func (r *ResourceUIDResolver) fetchAccessToken(ctx context.Context) (string, tim
 	data.Set("grant_type", "client_credentials")
 	data.Set("client_id", r.config.OAuthClientID)
 	data.Set("client_secret", r.config.OAuthClientSecret)
+	if scope := strings.TrimSpace(r.config.OAuthScope); scope != "" {
+		data.Set("scope", scope)
+	}
 
 	reqCtx, cancel := context.WithTimeout(ctx, r.config.Timeout)
 	defer cancel()

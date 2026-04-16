@@ -1160,6 +1160,12 @@
           "title": "oauthClientId",
           "type": "string"
         },
+        "oauthScope": {
+          "default": "",
+          "description": "Optional OAuth2 scope to request in the client credentials token request",
+          "title": "oauthScope",
+          "type": "string"
+        },
         "openSearchSecretName": {
           "default": "",
           "description": "Name of an existing Secret with 'username' and 'password' keys for OpenSearch authentication. Required.",
@@ -1521,6 +1527,12 @@
               "default": "openchoreo-rca-agent",
               "description": "OAuth2 client ID registered with the IDP",
               "title": "clientId",
+              "type": "string"
+            },
+            "scope": {
+              "default": "",
+              "description": "Optional OAuth2 scope to request in the client credentials token request",
+              "title": "scope",
               "type": "string"
             }
           },

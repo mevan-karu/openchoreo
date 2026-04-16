@@ -14,6 +14,9 @@ data:
   REPORT_BACKEND: {{ .Values.rca.reportBackend | quote }}
   OAUTH_TOKEN_URL: {{ .Values.security.oidc.tokenUrl | quote }}
   OAUTH_CLIENT_ID: {{ .Values.rca.oauth.clientId | quote }}
+  {{- if .Values.rca.oauth.scope }}
+  OAUTH_SCOPE: {{ .Values.rca.oauth.scope | quote }}
+  {{- end }}
   TLS_INSECURE_SKIP_VERIFY: {{ or .Values.security.oidc.jwksUrlTlsInsecureSkipVerify .Values.security.oidc.uidResolverTlsInsecureSkipVerify | quote }}
   JWT_JWKS_URL: {{ .Values.security.oidc.jwksUrl | quote }}
   JWT_ISSUER: {{ .Values.security.oidc.issuer | quote }}

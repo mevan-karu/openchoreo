@@ -81,6 +81,7 @@ func (i *AuthImpl) loginWithClientCredentials(params LoginParams) error {
 		TokenEndpoint: oidcConfig.TokenEndpoint,
 		ClientID:      clientID,
 		ClientSecret:  clientSecret,
+		Scope:         params.Scope,
 	}
 
 	tokenResp, err := authClient.GetToken()
@@ -94,6 +95,7 @@ func (i *AuthImpl) loginWithClientCredentials(params LoginParams) error {
 		if cfg.Credentials[idx].Name == credentialName {
 			cfg.Credentials[idx].ClientID = clientID
 			cfg.Credentials[idx].ClientSecret = clientSecret
+			cfg.Credentials[idx].Scope = params.Scope
 			cfg.Credentials[idx].Token = tokenResp.AccessToken
 			cfg.Credentials[idx].AuthMethod = "client_credentials"
 			credentialExists = true
@@ -106,6 +108,7 @@ func (i *AuthImpl) loginWithClientCredentials(params LoginParams) error {
 			Name:         credentialName,
 			ClientID:     clientID,
 			ClientSecret: clientSecret,
+			Scope:        params.Scope,
 			Token:        tokenResp.AccessToken,
 			AuthMethod:   "client_credentials",
 		})

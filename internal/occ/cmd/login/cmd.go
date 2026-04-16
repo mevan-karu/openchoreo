@@ -12,6 +12,7 @@ type LoginParams struct {
 	ClientCredentials bool
 	ClientID          string
 	ClientSecret      string
+	Scope             string
 	CredentialName    string
 }
 
@@ -24,11 +25,13 @@ func NewLoginCmd() *cobra.Command {
 			clientCreds, _ := cmd.Flags().GetBool("client-credentials")
 			clientID, _ := cmd.Flags().GetString("client-id")
 			clientSecret, _ := cmd.Flags().GetString("client-secret")
+			scope, _ := cmd.Flags().GetString("scope")
 			credentialName, _ := cmd.Flags().GetString("credential")
 			return NewAuthImpl().Login(LoginParams{
 				ClientCredentials: clientCreds,
 				ClientID:          clientID,
 				ClientSecret:      clientSecret,
+				Scope:             scope,
 				CredentialName:    credentialName,
 			})
 		},
@@ -36,6 +39,7 @@ func NewLoginCmd() *cobra.Command {
 	cmd.Flags().Bool("client-credentials", false, "Use OAuth2 client credentials flow for authentication")
 	cmd.Flags().String("client-id", "", "OAuth2 client ID for service account authentication")
 	cmd.Flags().String("client-secret", "", "OAuth2 client secret for service account authentication")
+	cmd.Flags().String("scope", "", "OAuth2 scope to request in the token request (optional, client credentials flow only)")
 	cmd.Flags().String("credential", "", "Name to save the credential as in config")
 	return cmd
 }

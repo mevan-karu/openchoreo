@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"testing"
@@ -53,6 +54,47 @@ func mockOIDCTransport(t *testing.T, securityEnabled bool, tokenStatus int) stri
 			}
 			return testutil.JSONResp(http.StatusOK, map[string]any{
 				"access_token": "test-access-token",
+				"token_type":   "Bearer",
+				"expires_in":   3600,
+			}), nil
+
+		default:
+			return &http.Response{StatusCode: http.StatusNotFound, Body: http.NoBody, Header: http.Header{}}, nil
+		}
+	}))
+
+	return baseURL
+}
+
+// mockOIDCTransportCapturingToken is like mockOIDCTransport but also captures the
+// parsed form values from the /token request for assertion in the calling test.
+func mockOIDCTransportCapturingToken(t *testing.T, captured *url.Values) string {
+	t.Helper()
+	const baseURL = "http://mock-control-plane"
+
+	testutil.SetTransport(t, testutil.RoundTripFunc(func(r *http.Request) (*http.Response, error) {
+		switch r.URL.Path {
+		case "/.well-known/oauth-protected-resource":
+			return testutil.JSONResp(http.StatusOK, map[string]any{
+				"authorization_servers": []string{baseURL},
+				"openchoreo_clients": []map[string]any{
+					{"name": "cli", "client_id": "cli-id", "scopes": []string{"openid"}},
+				},
+				"openchoreo_security_enabled": true,
+			}), nil
+
+		case "/.well-known/openid-configuration":
+			return testutil.JSONResp(http.StatusOK, map[string]any{
+				"authorization_endpoint": baseURL + "/authorize",
+				"token_endpoint":         baseURL + "/token",
+			}), nil
+
+		case "/token":
+			body, _ := io.ReadAll(r.Body)
+			vals, _ := url.ParseQuery(string(body))
+			*captured = vals
+			return testutil.JSONResp(http.StatusOK, map[string]any{
+				"access_token": "scoped-token",
 				"token_type":   "Bearer",
 				"expires_in":   3600,
 			}), nil
@@ -274,6 +316,68 @@ func TestIsLoggedIn(t *testing.T) {
 		})
 
 		assert.False(t, NewAuthImpl().IsLoggedIn())
+	})
+}
+
+func TestLoginWithClientCredentials_Scope(t *testing.T) {
+	t.Run("scope is sent in token request and persisted to credential", func(t *testing.T) {
+		home := testutil.SetupTestHome(t)
+		var captured url.Values
+		baseURL := mockOIDCTransportCapturingToken(t, &captured)
+
+		testutil.WriteOCConfig(t, home, &config.StoredConfig{
+			CurrentContext: "ctx",
+			ControlPlanes:  []config.ControlPlane{{Name: "cp", URL: baseURL}},
+			Credentials:    []config.Credential{{Name: "cred"}},
+			Contexts:       []config.Context{{Name: "ctx", ControlPlane: "cp", Credentials: "cred"}},
+		})
+
+		err := NewAuthImpl().Login(LoginParams{
+			ClientCredentials: true,
+			ClientID:          "my-client",
+			ClientSecret:      "my-secret",
+			Scope:             "openid profile",
+			CredentialName:    "cred",
+		})
+		require.NoError(t, err)
+
+		// Scope must have been sent in the token request.
+		assert.Equal(t, "openid profile", captured.Get("scope"))
+
+		// Scope must be persisted to the stored credential for token refresh.
+		cfg, err := config.LoadStoredConfig()
+		require.NoError(t, err)
+		require.Len(t, cfg.Credentials, 1)
+		assert.Equal(t, "openid profile", cfg.Credentials[0].Scope)
+		assert.Equal(t, "scoped-token", cfg.Credentials[0].Token)
+	})
+
+	t.Run("scope is not sent when empty", func(t *testing.T) {
+		home := testutil.SetupTestHome(t)
+		var captured url.Values
+		baseURL := mockOIDCTransportCapturingToken(t, &captured)
+
+		testutil.WriteOCConfig(t, home, &config.StoredConfig{
+			CurrentContext: "ctx",
+			ControlPlanes:  []config.ControlPlane{{Name: "cp", URL: baseURL}},
+			Credentials:    []config.Credential{{Name: "cred"}},
+			Contexts:       []config.Context{{Name: "ctx", ControlPlane: "cp", Credentials: "cred"}},
+		})
+
+		err := NewAuthImpl().Login(LoginParams{
+			ClientCredentials: true,
+			ClientID:          "my-client",
+			ClientSecret:      "my-secret",
+			CredentialName:    "cred",
+		})
+		require.NoError(t, err)
+
+		assert.Equal(t, "", captured.Get("scope"))
+
+		cfg, err := config.LoadStoredConfig()
+		require.NoError(t, err)
+		require.Len(t, cfg.Credentials, 1)
+		assert.Equal(t, "", cfg.Credentials[0].Scope)
 	})
 }
 
