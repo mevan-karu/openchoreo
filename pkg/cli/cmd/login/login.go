@@ -20,6 +20,7 @@ func NewLoginCmd(impl api.CommandImplementationInterface) *cobra.Command {
 			flags.ClientCredentials,
 			flags.ClientID,
 			flags.ClientSecret,
+			flags.OAuthScope,
 			flags.CredentialName,
 		},
 		RunE: func(fg *builder.FlagGetter) error {
@@ -27,6 +28,7 @@ func NewLoginCmd(impl api.CommandImplementationInterface) *cobra.Command {
 				ClientCredentials: fg.GetBool(flags.ClientCredentials),
 				ClientID:          fg.GetString(flags.ClientID),
 				ClientSecret:      fg.GetString(flags.ClientSecret),
+				Scope:             fg.GetString(flags.OAuthScope),
 				CredentialName:    fg.GetString(flags.CredentialName),
 			})
 		},

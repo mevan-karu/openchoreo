@@ -60,6 +60,7 @@ type LoginParams struct {
 	ClientCredentials bool // Flag to use client credentials flow
 	ClientID          string
 	ClientSecret      string
+	Scope             string // Optional OAuth2 scope for client credentials flow
 	CredentialName    string // Name to save credential as
 }
 

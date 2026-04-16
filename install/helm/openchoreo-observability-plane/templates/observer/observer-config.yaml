@@ -31,6 +31,9 @@ data:
   UID_RESOLVER_OAUTH_TOKEN_URL: {{ .Values.security.oidc.tokenUrl | quote }}
   {{- end }}
   UID_RESOLVER_OAUTH_CLIENT_ID: {{ .Values.observer.oauthClientId | default "openchoreo-observer-resource-reader-client" | quote }}
+  {{- if .Values.observer.oauthScope }}
+  UID_RESOLVER_OAUTH_SCOPE: {{ .Values.observer.oauthScope | quote }}
+  {{- end }}
   {{- if .Values.security.oidc.authServerBaseUrl }}
   AUTH_SERVER_BASE_URL: {{ .Values.security.oidc.authServerBaseUrl | quote }}
   {{- end }}

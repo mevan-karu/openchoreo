@@ -35,6 +35,7 @@ class Settings(BaseSettings):
     oauth_token_url: str = ""
     oauth_client_id: str = ""
     oauth_client_secret: str = ""
+    oauth_scope: str = ""
     jwt_jwks_url: str = ""
     jwt_issuer: str = ""
     jwt_audience: str = ""

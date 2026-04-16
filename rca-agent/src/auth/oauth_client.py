@@ -12,15 +12,19 @@ logger = logging.getLogger(__name__)
 
 
 class OAuth2ClientCredentialsAuth(httpx.Auth):
-    def __init__(self, token_url: str, client_id: str, client_secret: str):
+    def __init__(self, token_url: str, client_id: str, client_secret: str, scope: str = ""):
         self.token_url = token_url
         self.client_id = client_id
         self.client_secret = client_secret
+        self.scope = scope
         self._token: dict | None = None
 
     def _ensure_token(self, client: OAuth2Client) -> dict:
         if self._token is None or client.token.is_expired():
-            self._token = client.fetch_token(self.token_url, grant_type="client_credentials")
+            kwargs = {"grant_type": "client_credentials"}
+            if self.scope:
+                kwargs["scope"] = self.scope
+            self._token = client.fetch_token(self.token_url, **kwargs)
             if self._token is None:
                 raise RuntimeError("Failed to fetch OAuth2 token")
             logger.debug("Fetched OAuth2 token, expires in %s", self._token.get("expires_in"))
@@ -28,7 +32,10 @@ class OAuth2ClientCredentialsAuth(httpx.Auth):
 
     async def _async_ensure_token(self, client: AsyncOAuth2Client) -> dict:
         if self._token is None or client.token.is_expired():
-            self._token = await client.fetch_token(self.token_url, grant_type="client_credentials")
+            kwargs = {"grant_type": "client_credentials"}
+            if self.scope:
+                kwargs["scope"] = self.scope
+            self._token = await client.fetch_token(self.token_url, **kwargs)
             if self._token is None:
                 raise RuntimeError("Failed to fetch OAuth2 token")
             logger.debug("Fetched OAuth2 token, expires in %s", self._token.get("expires_in"))
@@ -73,6 +80,7 @@ def get_oauth2_auth() -> OAuth2ClientCredentialsAuth:
         token_url=settings.oauth_token_url,
         client_id=settings.oauth_client_id,
         client_secret=settings.oauth_client_secret,
+        scope=settings.oauth_scope,
     )
 
 
@@ -92,7 +100,10 @@ async def check_oauth2_connection() -> bool:
     )
 
     try:
-        token = await client.fetch_token(settings.oauth_token_url, grant_type="client_credentials")
+        kwargs = {"grant_type": "client_credentials"}
+        if settings.oauth_scope:
+            kwargs["scope"] = settings.oauth_scope
+        token = await client.fetch_token(settings.oauth_token_url, **kwargs)
         logger.debug("OAuth2 token fetch successful, expires in %s", token.get("expires_in"))
         return True
     except Exception as e:

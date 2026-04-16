@@ -395,6 +395,11 @@ var (
 		Usage: "Name to save the credential as in config",
 	}
 
+	OAuthScope = Flag{
+		Name:  "scope",
+		Usage: "OAuth2 scope to request in the token request (optional, client credentials flow only)",
+	}
+
 	URL = Flag{
 		Name:  "url",
 		Usage: "Control plane URL to update",

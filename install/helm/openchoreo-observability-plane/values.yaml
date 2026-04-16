@@ -520,6 +520,12 @@ observer:
   oauthClientId: "openchoreo-observer-resource-reader-client"
   # @schema
   # type: string
+  # description: Optional OAuth2 scope to request in the client credentials token request
+  # default: ""
+  # @schema
+  oauthScope: ""
+  # @schema
+  # type: string
   # description: Name of an existing Secret injected via envFrom into the Observer container. Required keys - OPENSEARCH_USERNAME, OPENSEARCH_PASSWORD, UID_RESOLVER_OAUTH_CLIENT_SECRET. Optional keys - ALERT_STORE_DSN (when alertStoreBackend is postgresql).
   # default: ""
   # @schema
@@ -1492,6 +1498,12 @@ rca:
     # default: openchoreo-rca-agent
     # @schema
     clientId: "openchoreo-rca-agent"
+    # @schema
+    # type: string
+    # description: Optional OAuth2 scope to request in the client credentials token request
+    # default: ""
+    # @schema
+    scope: ""
 
   # @schema
   # type: object

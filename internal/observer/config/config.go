@@ -131,6 +131,8 @@ type UIDResolverConfig struct {
 	OAuthClientID string `koanf:"oauth.client.id"`
 	// OAuthClientSecret is the OAuth2 client secret for authentication
 	OAuthClientSecret string `koanf:"oauth.client.secret"`
+	// OAuthScope is the optional OAuth2 scope to request in the token request
+	OAuthScope string `koanf:"oauth.scope"`
 	// TLSInsecureSkipVerify skips TLS certificate verification (for development)
 	TLSInsecureSkipVerify bool `koanf:"tls.insecure.skip.verify"`
 	// Timeout is the HTTP client timeout for API calls
@@ -221,6 +223,7 @@ func Load() (*Config, error) {
 		"UID_RESOLVER_OAUTH_TOKEN_URL":          "uid_resolver.oauth.token.url",
 		"UID_RESOLVER_OAUTH_CLIENT_ID":          "uid_resolver.oauth.client.id",
 		"UID_RESOLVER_OAUTH_CLIENT_SECRET":      "uid_resolver.oauth.client.secret",
+		"UID_RESOLVER_OAUTH_SCOPE":              "uid_resolver.oauth.scope",
 		"UID_RESOLVER_TLS_INSECURE_SKIP_VERIFY": "uid_resolver.tls.insecure.skip.verify",
 		"UID_RESOLVER_TIMEOUT":                  "uid_resolver.timeout",
 		"UID_RESOLVER_MAX_AUTH_RETRY":           "uid_resolver.max.auth.retry",
