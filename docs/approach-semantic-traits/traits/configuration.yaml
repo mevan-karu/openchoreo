@@ -1,0 +1,170 @@
+apiVersion: openchoreo.dev/v1alpha1
+kind: ClusterTrait
+metadata:
+  name: configuration
+  annotations:
+    openchoreo.dev/description: "Creates ConfigMaps and ExternalSecrets for configurations and secrets, then patches the workload to inject dependency env vars, envFrom references, volume mounts, and volumes"
+spec:
+  creates:
+    - forEach: ${configurations.toConfigEnvsByContainer()}
+      var: envConfig
+      template:
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: ${envConfig.resourceName}
+          namespace: ${metadata.namespace}
+        data: |
+          ${envConfig.envs.transformMapEntry(index, env, {env.name: env.value})}
+
+    - forEach: ${configurations.toConfigFileList()}
+      var: config
+      template:
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: ${config.resourceName}
+          namespace: ${metadata.namespace}
+        data:
+          ${config.name}: |
+            ${config.value}
+
+    - forEach: ${configurations.toSecretEnvsByContainer()}
+      var: secretEnv
+      template:
+        apiVersion: external-secrets.io/v1
+        kind: ExternalSecret
+        metadata:
+          name: ${secretEnv.resourceName}
+          namespace: ${metadata.namespace}
+        spec:
+          refreshInterval: 15s
+          secretStoreRef:
+            name: ${dataplane.secretStore}
+            kind: ClusterSecretStore
+          target:
+            name: ${secretEnv.resourceName}
+            creationPolicy: Owner
+          data: |
+            ${secretEnv.envs.map(secret, {
+              "secretKey": secret.name,
+              "remoteRef": {
+                "key": secret.remoteRef.key,
+                "property": has(secret.remoteRef.property) ? secret.remoteRef.property : oc_omit()
+              }
+            })}
+
+    - forEach: ${configurations.toSecretFileList()}
+      var: file
+      template:
+        apiVersion: external-secrets.io/v1
+        kind: ExternalSecret
+        metadata:
+          name: ${file.resourceName}
+          namespace: ${metadata.namespace}
+        spec:
+          refreshInterval: 15s
+          secretStoreRef:
+            name: ${dataplane.secretStore}
+            kind: ClusterSecretStore
+          target:
+            name: ${file.resourceName}
+            creationPolicy: Owner
+          data:
+            - secretKey: ${file.name}
+              remoteRef:
+                key: ${file.remoteRef.key}
+                property: |
+                  ${has(file.remoteRef.property) ? file.remoteRef.property : oc_omit()}
+
+  # Patch the workload to inject dependency connection env vars and references to
+  # the config/secret resources created above. Operations use JSON Patch append
+  # (add with /- path) so they compose with anything already in the workload template.
+  patches:
+    - target:
+        group: apps
+        version: v1
+        kind: Deployment
+      forEach: ${dependencies.toContainerEnvs()}
+      var: envVar
+      operations:
+        - op: add
+          path: /spec/template/spec/containers/0/env/-
+          value: ${envVar}
+
+    - target:
+        group: batch
+        version: v1
+        kind: CronJob
+      forEach: ${dependencies.toContainerEnvs()}
+      var: envVar
+      operations:
+        - op: add
+          path: /spec/jobTemplate/spec/template/spec/containers/0/env/-
+          value: ${envVar}
+
+    - target:
+        group: apps
+        version: v1
+        kind: Deployment
+      forEach: ${configurations.toContainerEnvFrom()}
+      var: envFrom
+      operations:
+        - op: add
+          path: /spec/template/spec/containers/0/envFrom/-
+          value: ${envFrom}
+
+    - target:
+        group: apps
+        version: v1
+        kind: Deployment
+      forEach: ${configurations.toContainerVolumeMounts()}
+      var: mount
+      operations:
+        - op: add
+          path: /spec/template/spec/containers/0/volumeMounts/-
+          value: ${mount}
+
+    - target:
+        group: apps
+        version: v1
+        kind: Deployment
+      forEach: ${configurations.toVolumes()}
+      var: volume
+      operations:
+        - op: add
+          path: /spec/template/spec/volumes/-
+          value: ${volume}
+
+    - target:
+        group: batch
+        version: v1
+        kind: CronJob
+      forEach: ${configurations.toContainerEnvFrom()}
+      var: envFrom
+      operations:
+        - op: add
+          path: /spec/jobTemplate/spec/template/spec/containers/0/envFrom/-
+          value: ${envFrom}
+
+    - target:
+        group: batch
+        version: v1
+        kind: CronJob
+      forEach: ${configurations.toContainerVolumeMounts()}
+      var: mount
+      operations:
+        - op: add
+          path: /spec/jobTemplate/spec/template/spec/containers/0/volumeMounts/-
+          value: ${mount}
+
+    - target:
+        group: batch
+        version: v1
+        kind: CronJob
+      forEach: ${configurations.toVolumes()}
+      var: volume
+      operations:
+        - op: add
+          path: /spec/jobTemplate/spec/template/spec/volumes/-
+          value: ${volume}

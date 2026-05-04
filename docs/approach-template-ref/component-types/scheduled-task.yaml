@@ -1,0 +1,98 @@
+apiVersion: openchoreo.dev/v1alpha1
+kind: ClusterComponentType
+metadata:
+  name: scheduled-task
+  annotations:
+    openchoreo.dev/description: "A component that runs to completion on a schedule"
+spec:
+  workloadType: cronjob
+
+  allowedWorkflows:
+    - kind: ClusterWorkflow
+      name: paketo-buildpacks-builder
+    - kind: ClusterWorkflow
+      name: gcp-buildpacks-builder
+    - kind: ClusterWorkflow
+      name: dockerfile-builder
+    - kind: ClusterWorkflow
+      name: ballerina-buildpack-builder
+
+  allowedTraits: []
+
+  parameters:
+    openAPIV3Schema:
+      type: object
+      properties:
+        successfulJobsHistoryLimit:
+          type: integer
+          default: 3
+        failedJobsHistoryLimit:
+          type: integer
+          default: 1
+        concurrencyPolicy:
+          type: string
+          default: Forbid
+        backoffLimit:
+          type: integer
+          default: 3
+        activeDeadlineSeconds:
+          type: integer
+          default: 300
+        restartPolicy:
+          type: string
+          default: OnFailure
+        timeZone:
+          type: string
+
+  environmentConfigs:
+    openAPIV3Schema:
+      type: object
+      $defs:
+        ResourceQuantity:
+          type: object
+          default: {}
+          properties:
+            cpu:
+              type: string
+              default: "100m"
+            memory:
+              type: string
+              default: "128Mi"
+        ResourceRequirements:
+          type: object
+          properties:
+            requests:
+              $ref: "#/$defs/ResourceQuantity"
+            limits:
+              $ref: "#/$defs/ResourceQuantity"
+          default: {}
+      properties:
+        schedule:
+          type: string
+          default: "1 * * * *"
+        resources:
+          $ref: "#/$defs/ResourceRequirements"
+        imagePullPolicy:
+          type: string
+          default: IfNotPresent
+          enum:
+            - Always
+            - IfNotPresent
+            - Never
+
+  resources:
+    - templateRef:
+        kind: ClusterResourceTemplate
+        name: standard-cronjob
+    - templateRef:
+        kind: ClusterResourceTemplate
+        name: env-config
+    - templateRef:
+        kind: ClusterResourceTemplate
+        name: file-config
+    - templateRef:
+        kind: ClusterResourceTemplate
+        name: secret-env-external
+    - templateRef:
+        kind: ClusterResourceTemplate
+        name: secret-file-external

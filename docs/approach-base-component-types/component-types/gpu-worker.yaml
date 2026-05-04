@@ -1,0 +1,85 @@
+apiVersion: openchoreo.dev/v1alpha1
+kind: ClusterComponentType
+metadata:
+  name: gpu-worker
+  annotations:
+    openchoreo.dev/description: "A GPU-accelerated worker for compute-intensive or ML inference workloads"
+spec:
+  baseType:
+    kind: ClusterBaseComponentType
+    name: base-deployment
+
+  # workloadType must be declared explicitly until the CRD relaxes the required
+  # constraint for CTs that have a baseType. It must match the base's workloadType.
+  workloadType: deployment
+
+  # Inherits from base-deployment:
+  #   environmentConfigs schema (replicas, resources, imagePullPolicy),
+  #   service (skipped — size(workload.endpoints) == 0 by validation),
+  #   deployment, env-config, file-config, secret-env-external, secret-file-external
+
+  allowedWorkflows:
+    - kind: ClusterWorkflow
+      name: paketo-buildpacks-builder
+    - kind: ClusterWorkflow
+      name: dockerfile-builder
+
+  # CT-level parameter: the GPU accelerator family is a deployment-time architectural
+  # choice, not a per-environment tuning knob. It determines which node pool the
+  # workload lands on and is set once when the component type is authored.
+  parameters:
+    openAPIV3Schema:
+      type: object
+      properties:
+        gpuType:
+          type: string
+          default: nvidia-tesla-t4
+          enum:
+            - nvidia-tesla-t4
+            - nvidia-a100-80gb
+
+  # Extends base-deployment's environmentConfigs with GPU-specific per-environment knobs.
+  # The base already contributes: replicas, resources (cpu/memory), imagePullPolicy.
+  # gpu-worker adds: gpuCount — operators tune this per environment (dev: 1, prod: 4).
+  environmentConfigs:
+    openAPIV3Schema:
+      type: object
+      properties:
+        gpuCount:
+          type: integer
+          default: 1
+          minimum: 1
+          maximum: 8
+
+  # Patch the base 'deployment' resource surgically — only GPU-specific fields are added.
+  # All OC integration expressions (env, envFrom, volumeMounts, volumes) and the
+  # config/secret resource blocks are inherited from base-deployment untouched.
+  patches:
+    - target: deployment
+      patch:
+        # Route pods to GPU node pool based on the developer-chosen accelerator.
+        - op: add
+          path: /spec/template/spec/nodeSelector
+          value:
+            cloud.google.com/gke-accelerator: ${parameters.gpuType}
+
+        # Tolerate the GPU taint that node pools typically carry.
+        - op: add
+          path: /spec/template/spec/tolerations
+          value:
+            - key: nvidia.com/gpu
+              operator: Exists
+              effect: NoSchedule
+
+        # Enforce GPU device allocation — operators control the count via environmentConfigs.
+        - op: add
+          path: /spec/template/spec/containers/0/resources/limits/nvidia.com~1gpu
+          value: "${environmentConfigs.gpuCount}"
+
+  allowedTraits:
+    - kind: ClusterTrait
+      name: observability-alert-rule
+
+  validations:
+    - rule: "${size(workload.endpoints) == 0}"
+      message: "GPU worker components must not expose endpoints. Use a separate 'gpu-service' type for GPU-accelerated components that serve requests."

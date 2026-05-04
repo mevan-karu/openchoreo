@@ -1,0 +1,80 @@
+apiVersion: openchoreo.dev/v1alpha1
+kind: ClusterComponentType
+metadata:
+  name: worker
+  annotations:
+    openchoreo.dev/description: "A long-running background or event-driven component with no endpoints"
+spec:
+  workloadType: deployment
+
+  allowedWorkflows:
+    - kind: ClusterWorkflow
+      name: paketo-buildpacks-builder
+    - kind: ClusterWorkflow
+      name: gcp-buildpacks-builder
+    - kind: ClusterWorkflow
+      name: dockerfile-builder
+    - kind: ClusterWorkflow
+      name: ballerina-buildpack-builder
+
+  allowedTraits:
+    - kind: ClusterTrait
+      name: observability-alert-rule
+
+  validations:
+    - rule: "${size(workload.endpoints) == 0}"
+      message: "Worker components must not have endpoints. Use 'deployment/service' for components with endpoints."
+
+  environmentConfigs:
+    openAPIV3Schema:
+      type: object
+      $defs:
+        ResourceQuantity:
+          type: object
+          default: {}
+          properties:
+            cpu:
+              type: string
+              default: "100m"
+            memory:
+              type: string
+              default: "256Mi"
+        ResourceRequirements:
+          type: object
+          properties:
+            requests:
+              $ref: "#/$defs/ResourceQuantity"
+            limits:
+              $ref: "#/$defs/ResourceQuantity"
+          default: {}
+      properties:
+        replicas:
+          type: integer
+          default: 1
+          minimum: 0
+        resources:
+          $ref: "#/$defs/ResourceRequirements"
+        imagePullPolicy:
+          type: string
+          default: IfNotPresent
+          enum:
+            - Always
+            - IfNotPresent
+            - Never
+
+  resources:
+    - templateRef:
+        kind: ClusterResourceTemplate
+        name: standard-deployment
+    - templateRef:
+        kind: ClusterResourceTemplate
+        name: env-config
+    - templateRef:
+        kind: ClusterResourceTemplate
+        name: file-config
+    - templateRef:
+        kind: ClusterResourceTemplate
+        name: secret-env-external
+    - templateRef:
+        kind: ClusterResourceTemplate
+        name: secret-file-external

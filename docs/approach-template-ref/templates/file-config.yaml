@@ -1,0 +1,17 @@
+apiVersion: openchoreo.dev/v1alpha1
+kind: ClusterResourceTemplate
+metadata:
+  name: file-config
+spec:
+  id: file-config
+  forEach: ${configurations.toConfigFileList()}
+  var: config
+  template:
+    apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: ${config.resourceName}
+      namespace: ${metadata.namespace}
+    data:
+      ${config.name}: |
+        ${config.value}

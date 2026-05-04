@@ -1,0 +1,30 @@
+apiVersion: openchoreo.dev/v1alpha1
+kind: ClusterComponentType
+metadata:
+  name: scheduled-task
+  annotations:
+    openchoreo.dev/description: "A component that runs to completion on a schedule"
+spec:
+  baseType:
+    kind: ClusterBaseComponentType
+    name: base-cronjob
+
+  # workloadType must be declared explicitly until the CRD relaxes the required
+  # constraint for CTs that have a baseType. It must match the base's workloadType.
+  workloadType: cronjob
+
+  # Inherits everything from base-cronjob:
+  #   parameters schema, environmentConfigs schema,
+  #   cronjob, env-config, file-config, secret-env-external, secret-file-external
+
+  allowedWorkflows:
+    - kind: ClusterWorkflow
+      name: paketo-buildpacks-builder
+    - kind: ClusterWorkflow
+      name: gcp-buildpacks-builder
+    - kind: ClusterWorkflow
+      name: dockerfile-builder
+    - kind: ClusterWorkflow
+      name: ballerina-buildpack-builder
+
+  # No additional resources, parameters, validations, or allowedTraits needed.

@@ -1,0 +1,40 @@
+apiVersion: openchoreo.dev/v1alpha1
+kind: ClusterResourceTemplate
+metadata:
+  name: standard-deployment
+spec:
+  id: deployment
+  template:
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: ${metadata.name}
+      namespace: ${metadata.namespace}
+      labels: ${metadata.labels}
+    spec:
+      replicas: ${environmentConfigs.replicas}
+      selector:
+        matchLabels: ${metadata.podSelectors}
+      template:
+        metadata:
+          labels: ${metadata.podSelectors}
+        spec:
+          containers:
+            - name: main
+              image: ${workload.container.image}
+              imagePullPolicy: ${environmentConfigs.imagePullPolicy}
+              command: |
+                ${has(workload.container.command) ? workload.container.command : oc_omit()}
+              args: |
+                ${has(workload.container.args) ? workload.container.args : oc_omit()}
+              resources:
+                requests:
+                  cpu: ${environmentConfigs.resources.requests.cpu}
+                  memory: ${environmentConfigs.resources.requests.memory}
+                limits:
+                  cpu: ${environmentConfigs.resources.limits.cpu}
+                  memory: ${environmentConfigs.resources.limits.memory}
+              env: ${dependencies.toContainerEnvs()}
+              envFrom: ${configurations.toContainerEnvFrom()}
+              volumeMounts: ${configurations.toContainerVolumeMounts()}
+          volumes: ${configurations.toVolumes()}

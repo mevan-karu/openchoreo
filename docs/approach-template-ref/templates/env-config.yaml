@@ -1,0 +1,16 @@
+apiVersion: openchoreo.dev/v1alpha1
+kind: ClusterResourceTemplate
+metadata:
+  name: env-config
+spec:
+  id: env-config
+  forEach: ${configurations.toConfigEnvsByContainer()}
+  var: envConfig
+  template:
+    apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: ${envConfig.resourceName}
+      namespace: ${metadata.namespace}
+    data: |
+      ${envConfig.envs.transformMapEntry(index, env, {env.name: env.value})}
