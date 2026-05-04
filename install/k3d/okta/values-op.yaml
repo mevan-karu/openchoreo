@@ -1,0 +1,46 @@
+# Helm values for OpenChoreo Observability Plane - Okta identity provider
+# Based on install/k3d/single-cluster/values-op.yaml.
+# Replace every <placeholder> with your actual Okta values before applying.
+# Refer to docs/configure-okta-idp.md for setup instructions.
+
+observer:
+  openSearchSecretName: opensearch-admin-credentials
+  secretName: observer-secret
+  # Client ID of the API Services application created in Okta for the uid-resolver.
+  # The matching client secret must be stored in observer-secret under
+  # UID_RESOLVER_OAUTH_CLIENT_SECRET (see README.md).
+  oauthClientId: "0oa126uguo5RqIBvH698"
+  oauthScope: "openchoreo_api"
+  http:
+    hostnames:
+    - observer.openchoreo.localhost
+
+security:
+  oidc:
+    # Issuer must exactly match the iss claim in Okta-issued JWTs.
+    issuer: "https://trial-2922856.okta.com/oauth2/aus126rnutfliGGit698"
+    jwksUrl: "https://trial-2922856.okta.com/oauth2/aus126rnutfliGGit698/v1/keys"
+    # tokenUrl is used by the uid-resolver to exchange client credentials for tokens.
+    tokenUrl: "https://trial-2922856.okta.com/oauth2/aus126rnutfliGGit698/v1/token"
+  jwt:
+    audience: "openchoreo"
+
+# SRE Agent OAuth client — only required if using the SRE Agent (Step 3.5).
+# Store the client secret in OpenBao under secret/rca-oauth-client-secret, then
+# uncomment and fill in the client ID below.
+#
+# rca:
+#   secretName: "rca-agent-secret"
+#   oauth:
+#     clientId: "<okta-sre-agent-client-id>"
+
+rca:
+  http:
+    hostnames:
+    - rca-agent.openchoreo.localhost
+
+gateway:
+  httpPort: 11080
+  httpsPort: 11085
+  tls:
+    enabled: false

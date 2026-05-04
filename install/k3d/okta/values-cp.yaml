@@ -1,0 +1,179 @@
+# Helm values for OpenChoreo Control Plane - Okta identity provider
+# Based on install/k3d/single-cluster/values-cp.yaml.
+# Replace every <placeholder> with your actual Okta values before applying.
+# Refer to docs/configure-okta-idp.md for setup instructions.
+
+openchoreoApi:
+  http:
+    hostnames:
+    - api.openchoreo.localhost
+  config:
+    server:
+      publicUrl: "http://api.openchoreo.localhost:8080"
+    security:
+      authorization:
+        bootstrap:
+          # bootstrap.mappings replaces the full default list when overridden.
+          # All default mappings from the chart values.yaml are included here so
+          # nothing is lost. Only the lines marked "# Okta: ..." differ from the
+          # chart defaults — update those placeholders with your actual client IDs.
+          mappings:
+            # Group-based bindings — map Okta groups to platform roles.
+            # The group names (admins, developers, etc.) must match the groups
+            # returned in the groups claim from your Okta authorization server.
+            - name: admin-binding
+              kind: ClusterAuthzRoleBinding
+              roleMappings:
+                - roleRef:
+                    name: admin
+                    kind: ClusterAuthzRole
+              entitlement:
+                claim: groups
+                value: admins
+              effect: allow
+
+            - name: developer-binding
+              kind: ClusterAuthzRoleBinding
+              roleMappings:
+                - roleRef:
+                    name: developer
+                    kind: ClusterAuthzRole
+              entitlement:
+                claim: groups
+                value: developers
+              effect: allow
+
+            - name: platform-engineer-binding
+              kind: ClusterAuthzRoleBinding
+              roleMappings:
+                - roleRef:
+                    name: platform-engineer
+                    kind: ClusterAuthzRole
+              entitlement:
+                claim: groups
+                value: platform-engineers
+              effect: allow
+
+            - name: sre-binding
+              kind: ClusterAuthzRoleBinding
+              roleMappings:
+                - roleRef:
+                    name: sre
+                    kind: ClusterAuthzRole
+              entitlement:
+                claim: groups
+                value: sres
+              effect: allow
+
+            # Service account bindings — the sub claim in each JWT is the Okta
+            # client ID, so update the value fields to match your Okta applications.
+
+            # Okta: use the client ID of the Backstage web application (Step 3.1).
+            - name: backstage-catalog-reader-binding
+              kind: ClusterAuthzRoleBinding
+              system: true
+              roleMappings:
+                - roleRef:
+                    name: backstage-catalog-reader
+                    kind: ClusterAuthzRole
+              entitlement:
+                claim: sub
+                value: "0oa126rw4ut0klWu6698"
+              effect: allow
+
+            # Okta: use the client ID of the Observer Resource Reader application (Step 3.4).
+            - name: observer-resource-reader-binding
+              kind: ClusterAuthzRoleBinding
+              system: true
+              roleMappings:
+                - roleRef:
+                    name: observer-resource-reader
+                    kind: ClusterAuthzRole
+              entitlement:
+                claim: sub
+                value: "0oa126uguo5RqIBvH698"
+              effect: allow
+
+            # Okta: use the client ID of the Workload Publisher application (Step 3.3).
+            - name: workload-publisher-binding
+              kind: ClusterAuthzRoleBinding
+              system: true
+              roleMappings:
+                - roleRef:
+                    name: workload-publisher
+                    kind: ClusterAuthzRole
+              entitlement:
+                claim: sub
+                value: "0oa126ufp7cdlgvtz698"
+              effect: allow
+
+            # RCA agent binding — only required if you are using the SRE agent.
+            # Configuration instructions for the RCA agent with an external identity
+            # provider are not covered in docs/configure-okta-idp.md.
+            # To enable: create an API Services application in Okta, then uncomment
+            # this binding and replace the value with its client ID.
+            #
+            # - name: rca-agent-binding
+            #   kind: ClusterAuthzRoleBinding
+            #   system: true
+            #   roleMappings:
+            #     - roleRef:
+            #         name: rca-agent
+            #         kind: ClusterAuthzRole
+            #   entitlement:
+            #     claim: sub
+            #     value: "<okta-rca-agent-client-id>"
+            #   effect: allow
+
+            # MCP tryout client — not identity-provider-specific, kept as-is.
+            - name: mcp-tryout-client-binding
+              kind: ClusterAuthzRoleBinding
+              roleMappings:
+                - roleRef:
+                    name: admin
+                    kind: ClusterAuthzRole
+              entitlement:
+                claim: sub
+                value: service_mcp_client
+              effect: allow
+
+backstage:
+  secretName: backstage-secrets
+  baseUrl: "http://openchoreo.localhost:8080"
+  http:
+    hostnames:
+    - openchoreo.localhost
+  auth:
+    clientId: "0oa126rw4ut0klWu6698"
+    redirectUrls:
+      - "http://openchoreo.localhost:8080/api/auth/openchoreo-auth/handler/frame"
+    oidcScope: "openid profile email"
+    # Okta requires an explicit scope for client_credentials token requests.
+    # Set this to the custom scope created in the authorization server (Step 1).
+    scope: "openchoreo_api"
+
+security:
+  oidc:
+    # issuer must exactly match the iss claim in Okta-issued JWTs.
+    issuer: "https://trial-2922856.okta.com/oauth2/aus126rnutfliGGit698"
+    wellKnownEndpoint: "https://trial-2922856.okta.com/oauth2/aus126rnutfliGGit698/.well-known/openid-configuration"
+    jwksUrl: "https://trial-2922856.okta.com/oauth2/aus126rnutfliGGit698/v1/keys"
+    authorizationUrl: "https://trial-2922856.okta.com/oauth2/aus126rnutfliGGit698/v1/authorize"
+    tokenUrl: "https://trial-2922856.okta.com/oauth2/aus126rnutfliGGit698/v1/token"
+    # CLI is a public client (no secret). Registering it here exposes the
+    # correct client ID to the occ login flow.
+    externalClients:
+      - name: cli
+        client_id: "0oa126ryl6mU134ao698"
+        scopes:
+          - openid
+          - profile
+          - email
+  jwt:
+    audience: "openchoreo"
+
+gateway:
+  httpPort: 8080
+  httpsPort: 8443
+  tls:
+    enabled: false

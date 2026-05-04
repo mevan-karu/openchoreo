@@ -48,6 +48,7 @@ configuration:
     allowedOrigins:
       - "http://openchoreo.localhost:8080"
       - "http://localhost:7007"
+      - "http://amp.openchoreo.localhost:8080"
 
   passkey:
     allowedOrigins:
