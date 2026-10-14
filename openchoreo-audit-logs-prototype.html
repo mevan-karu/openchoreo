@@ -1,0 +1,2586 @@
+<title>OpenChoreo Audit Trail</title>
+<meta name="color-scheme" content="light dark">
+<style>
+  /* ------------------------------------------------------------------
+     Tokens are the OpenChoreo design system's own, copied from
+     packages/design-system/src/theme/tokens.ts. Component rules follow
+     buildOpenChoreoTheme.ts, and the table follows the runtime-logs view
+     (plugins/openchoreo-observability/.../RuntimeLogs/styles.ts) so this
+     page reads as a sibling of the component Logs tab.
+     ------------------------------------------------------------------ */
+  :root {
+    color-scheme: light;
+
+    --surface-default: #ffffff;
+    --surface-paper: #ffffff;
+    --surface-raised: #ffffff;
+    --surface-hover: #f9fafb;
+    --surface-disabled: #f3f4f6;
+    --page-bg: #f8f8f8;
+    --nav-bg: #ffffff;
+    --nav-hover: #f9fafb;
+
+    --grey-50: #f9fafb;
+    --grey-100: #f3f4f6;
+    --grey-200: #e5e7eb;
+    --grey-300: #d1d5db;
+    --grey-400: #9ca3af;
+    --grey-500: #6b7280;
+    --grey-800: #1f2937;
+    --logo-wordmark: #1d2028;
+    --logo-accent: #0480fd;
+
+    --border-default: #e5e7eb;
+    --border-subtle: #f3f4f6;
+    --border-strong: #d1d5db;
+
+    --text-primary: #111827;
+    --text-body: #374151;      /* body1/body2 colour — secondary.dark */
+    --text-secondary: #4b5563;
+    --text-subtle: #6b7280;
+    --text-very-subtle: #9ca3af;
+    --text-disabled: #9ca3af;
+
+    --primary-light: #f0f1fb;
+    --primary-main: #5568c4;
+    --primary-dark: #4456b8;
+    --indigo-50: #f5f7ff;
+
+    --success-light: #f0fdf4; --success-main: #047857; --success-dark: #065f46;
+    --warning-light: #fff5eb; --warning-main: #b45309; --warning-dark: #92400e;
+    --error-light: #fef2f2;   --error-main: #dc2626;   --error-dark: #b91c1c;
+    --info-light: #dbeafe;    --info-main: #3b82f6;    --info-dark: #1d4ed8;
+    --neutral-light: #fafbfc; --neutral-main: #6b7280; --neutral-dark: #374151;
+
+    --action-hover: rgba(17, 24, 39, 0.04);
+    --action-selected: rgba(85, 104, 196, 0.08);
+
+    --shadow-sm-blur: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+    --shadow-card: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+    --shadow-md: 0 2px 8px 0 rgba(0, 0, 0, 0.08);
+    --shadow-xl: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+
+    --gradient-header: linear-gradient(90deg, #5568c4 0%, #7c8ee0 100%);
+
+    /* Filter-chip fill. MuiChip colorPrimary: a translucent primary wash with
+       primary.dark text, NOT primary.light as a solid background — that token
+       is a pale lavender and reads as a light chip on a dark ground. */
+    --chip-bg: var(--primary-light);
+    --chip-fg: var(--primary-dark);
+    --chip-border: rgba(85, 104, 196, 0.25);
+
+    /* Chart marks. These are fills on the page ground, so they follow
+       palette X.main (the StatusBadge dot colour) and must be redefined per
+       theme — a baked hex goes invisible in the other one. */
+    --chart-success: #047857;
+    --chart-failure: #dc2626;
+    --chart-denied: #b45309;
+    --chart-unauth: #6b7280;
+    --chart-grid: #e5e7eb;
+    --chart-label: #9ca3af;
+
+    --ui: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica,
+          Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+    --mono: monospace;
+
+    --r-field: 8px;
+    --r-card: 12px;
+    --r-pill: 16px;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+
+      --surface-default: #0f1117;
+      --surface-paper: #1a1d26;
+      --surface-raised: #242836;
+      --surface-hover: #1f2330;
+      --surface-disabled: #242836;
+      --page-bg: #0f1117;
+      --nav-bg: #14171f;
+      --nav-hover: #1f2330;
+
+      --grey-50: #1a1d26;
+      --grey-100: #242836;
+      --grey-200: #2a2f3a;
+      --grey-300: #3a414f;
+      --grey-400: #6b7280;
+      --grey-500: #9ca3af;
+      --grey-800: #f3f4f6;
+      --logo-wordmark: #e5e7eb;
+      --logo-accent: #0480fd;
+
+      --border-default: #2a2f3a;
+      --border-subtle: #242836;
+      --border-strong: #3a414f;
+
+      --text-primary: #e5e7eb;
+      --text-body: #e5e7eb;
+      --text-secondary: #9ca3af;
+      --text-subtle: #9ca3af;
+      --text-very-subtle: #6b7280;
+      --text-disabled: #4b5563;
+
+      --primary-light: #a8b5ff;
+      --primary-main: #8fa0ea;
+      --primary-dark: #6c7fd8;
+      --indigo-50: #1a1d2e;
+
+      --success-light: #12301f; --success-main: #34d399; --success-dark: #10b981;
+      --warning-light: #3a2a10; --warning-main: #fbbf24; --warning-dark: #f59e0b;
+      --error-light: #4c1d1d;   --error-main: #f87171;   --error-dark: #ef4444;
+      --info-light: #1e3a8a;    --info-main: #60a5fa;    --info-dark: #93c5fd;
+      --neutral-light: #2a2f3a; --neutral-main: #9ca3af; --neutral-dark: #d1d5db;
+
+      --action-hover: rgba(255, 255, 255, 0.06);
+      --action-selected: rgba(143, 160, 234, 0.14);
+
+      --shadow-sm-blur: 0 1px 3px 0 rgba(0, 0, 0, 0.4);
+      --shadow-card: 0 1px 3px 0 rgba(0, 0, 0, 0.4), 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+      --shadow-md: 0 2px 8px 0 rgba(0, 0, 0, 0.45);
+      --shadow-xl: 0 10px 15px -3px rgba(0, 0, 0, 0.55), 0 4px 6px -2px rgba(0, 0, 0, 0.4);
+
+      --chip-bg: rgba(143, 160, 234, 0.15);
+      --chip-fg: var(--primary-main);
+      --chip-border: rgba(143, 160, 234, 0.3);
+
+      --chart-success: #34d399;
+      --chart-failure: #f87171;
+      --chart-denied: #fbbf24;
+      --chart-unauth: #9ca3af;
+      --chart-grid: #2a2f3a;
+      --chart-label: #6b7280;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+
+    --surface-default: #0f1117;
+    --surface-paper: #1a1d26;
+    --surface-raised: #242836;
+    --surface-hover: #1f2330;
+    --surface-disabled: #242836;
+    --page-bg: #0f1117;
+    --nav-bg: #14171f;
+    --nav-hover: #1f2330;
+
+    --grey-50: #1a1d26;
+    --grey-100: #242836;
+    --grey-200: #2a2f3a;
+    --grey-300: #3a414f;
+    --grey-400: #6b7280;
+    --grey-500: #9ca3af;
+    --grey-800: #f3f4f6;
+    --logo-wordmark: #e5e7eb;
+    --logo-accent: #0480fd;
+
+    --border-default: #2a2f3a;
+    --border-subtle: #242836;
+    --border-strong: #3a414f;
+
+    --text-primary: #e5e7eb;
+    --text-body: #e5e7eb;
+    --text-secondary: #9ca3af;
+    --text-subtle: #9ca3af;
+    --text-very-subtle: #6b7280;
+    --text-disabled: #4b5563;
+
+    --primary-light: #a8b5ff;
+    --primary-main: #8fa0ea;
+    --primary-dark: #6c7fd8;
+    --indigo-50: #1a1d2e;
+
+    --success-light: #12301f; --success-main: #34d399; --success-dark: #10b981;
+    --warning-light: #3a2a10; --warning-main: #fbbf24; --warning-dark: #f59e0b;
+    --error-light: #4c1d1d;   --error-main: #f87171;   --error-dark: #ef4444;
+    --info-light: #1e3a8a;    --info-main: #60a5fa;    --info-dark: #93c5fd;
+    --neutral-light: #2a2f3a; --neutral-main: #9ca3af; --neutral-dark: #d1d5db;
+
+    --action-hover: rgba(255, 255, 255, 0.06);
+    --action-selected: rgba(143, 160, 234, 0.14);
+
+    --shadow-sm-blur: 0 1px 3px 0 rgba(0, 0, 0, 0.4);
+    --shadow-card: 0 1px 3px 0 rgba(0, 0, 0, 0.4), 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 2px 8px 0 rgba(0, 0, 0, 0.45);
+    --shadow-xl: 0 10px 15px -3px rgba(0, 0, 0, 0.55), 0 4px 6px -2px rgba(0, 0, 0, 0.4);
+
+    --chip-bg: rgba(143, 160, 234, 0.15);
+    --chip-fg: var(--primary-main);
+    --chip-border: rgba(143, 160, 234, 0.3);
+
+    --chart-success: #34d399;
+    --chart-failure: #f87171;
+    --chart-denied: #fbbf24;
+    --chart-unauth: #9ca3af;
+    --chart-grid: #2a2f3a;
+    --chart-label: #6b7280;
+  }
+
+  * { box-sizing: border-box; }
+
+  /* The design system's VisuallyHidden, for labels only assistive tech reads. */
+  .sr-only {
+    position: absolute; width: 1px; height: 1px; overflow: hidden;
+    clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap;
+  }
+
+  body {
+    margin: 0;
+    background: var(--page-bg);
+    color: var(--text-body);
+    font-family: var(--ui);
+    font-size: 14px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  :focus-visible { outline: 2px solid var(--primary-main); outline-offset: 2px; border-radius: 4px; }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+
+  /* ---------------- Shell ---------------- */
+
+  .app { display: grid; grid-template-columns: 224px minmax(0, 1fr); min-height: 100vh; }
+
+  .sidebar {
+    background: var(--nav-bg); border-right: 1px solid var(--border-default);
+    display: flex; flex-direction: column; padding: 18px 0 14px;
+    position: sticky; top: 0; height: 100vh;
+  }
+  .brand { display: flex; align-items: center; gap: 8px; padding: 0 18px 18px; }
+  .brand-mark { display: flex; flex-shrink: 0; }
+  .brand-name { font-size: 20px; font-weight: 600; color: var(--grey-800); }
+  .nav { display: flex; flex-direction: column; }
+  .nav-sep { height: 1px; background: var(--border-default); margin: 6px 0; }
+  .nav-item {
+    display: flex; align-items: center; gap: 14px; padding: 11px 18px;
+    color: var(--text-primary); text-decoration: none;
+    border-left: 3px solid transparent; font-size: 14px; cursor: pointer;
+  }
+  .nav-item:hover { background: var(--nav-hover); }
+  .nav-item[aria-current="page"] { color: var(--primary-main); border-left-color: var(--primary-main); }
+  .nav-item svg { flex: none; }
+  .nav-spacer { flex: 1 1 auto; }
+
+  .main { min-width: 0; display: flex; flex-direction: column; }
+
+  /* BackstageHeader: gradient fill, 22px/600 title, smBlur shadow. */
+  .banner {
+    background: var(--gradient-header);
+    color: #fff; padding: 16px 24px; min-height: 48px;
+    box-shadow: var(--shadow-sm-blur);
+    display: flex; align-items: flex-start; gap: 16px;
+  }
+  .banner h1 { margin: 0; font-size: 22px; font-weight: 600; }
+  .banner p { margin: 4px 0 0; font-size: 13px; line-height: 1.5; color: rgba(255, 255, 255, 0.8); }
+  .banner-grow { flex: 1 1 auto; }
+  .proto-pill {
+    align-self: center; font-size: 11px; font-weight: 500;
+    padding: 4px 12px; border-radius: var(--r-pill);
+    background: rgba(255, 255, 255, 0.18);
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    color: #fff; white-space: nowrap;
+  }
+
+  /* MuiTab: 50px min-height, 12px/16px padding, hover rgba(#111827,.1). */
+  .tabstrip {
+    display: flex; gap: 4px; padding: 0 16px;
+    background: var(--surface-paper); border-bottom: 1px solid var(--border-default);
+  }
+  .tab {
+    appearance: none; background: none; border: 0;
+    font-family: var(--ui); font-size: 14px; font-weight: 500;
+    text-transform: none; color: var(--text-secondary);
+    min-height: 50px; padding: 12px 16px;
+    border-bottom: 2px solid transparent; cursor: pointer;
+    transition: background-color 0.2s;
+  }
+  .tab:hover { background: rgba(17, 24, 39, 0.1); color: var(--text-primary); }
+  :root[data-theme="dark"] .tab:hover { background: rgba(255, 255, 255, 0.08); }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .tab:hover { background: rgba(255, 255, 255, 0.08); }
+  }
+  .tab[aria-selected="true"] { color: var(--primary-main); border-bottom-color: var(--primary-main); font-weight: 600; }
+
+  /* VerticalTabNav: 200px rail, 3px indicator, indigo[50] active fill. */
+  .page { min-width: 0; padding: 0 24px; }
+  .vtabs {
+    border-right: 1px solid var(--border-default); background: var(--surface-paper);
+    display: flex; flex-direction: column;
+    position: sticky; top: 0; min-height: calc(100vh - 150px);
+  }
+  .vtabs-head {
+    padding: 12px 16px; border-bottom: 1px solid var(--border-default);
+    font-size: 11px; font-weight: 600; letter-spacing: 0.5px;
+    text-transform: uppercase; color: var(--text-secondary);
+  }
+  .vtab {
+    appearance: none; background: none; text-align: left; width: 100%;
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 16px; border: 0; border-left: 3px solid transparent;
+    font-family: var(--ui); font-size: 14px; font-weight: 500; color: var(--text-primary);
+    cursor: pointer; transition: all 0.2s ease-in-out;
+  }
+  .vtab:hover:not(:disabled) { background: var(--surface-hover); }
+  .vtab[aria-selected="true"] {
+    border-left-color: var(--primary-main); background: var(--indigo-50);
+    color: var(--primary-main); font-weight: 600;
+  }
+  .vtab:disabled { opacity: 0.5; cursor: not-allowed; }
+  .vtab .vt-icon { display: flex; color: var(--text-secondary); flex: none; }
+  .vtab .vt-icon svg { width: 20px; height: 20px; }
+  .vtab[aria-selected="true"] .vt-icon { color: var(--primary-main); }
+  .vtab .vt-label { flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  .vpanel { min-width: 0; padding: 0 16px; }
+  .workspace { padding: 16px 0 32px; display: flex; flex-direction: column; gap: 16px; }
+
+  /* ---------------- Fields ---------------- */
+
+  .querybar { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr) 190px 170px; align-items: start; }
+  @media (max-width: 1080px) { .querybar { grid-template-columns: minmax(0, 1fr); } }
+
+  .field { position: relative; min-width: 0; }
+  .field-label {
+    position: absolute; top: -7px; left: 9px; z-index: 2;
+    background: var(--surface-paper); padding: 0 5px;
+    font-size: 12px; color: var(--text-secondary); line-height: 1; pointer-events: none;
+  }
+  /* MuiOutlinedInput: paper fill, grey[200] notch, 8px radius, 14px text. */
+  .field-control {
+    width: 100%; min-height: 54px;
+    display: flex; align-items: center; gap: 8px;
+    background: var(--surface-paper);
+    border: 1px solid var(--grey-200); border-radius: var(--r-field);
+    padding: 0 14px;
+    font-family: var(--ui); font-size: 14px; color: var(--text-primary);
+    text-align: left; cursor: pointer;
+    transition: border-color 0.2s ease-in-out;
+  }
+  .field-control:hover { border-color: var(--grey-300); }
+  .field-control[aria-expanded="true"] { border: 2px solid var(--primary-main); padding: 0 13px; }
+  .field-value { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .field-value.placeholder { color: var(--text-very-subtle); }
+  .field-control .caret { flex: none; color: var(--text-secondary); display: flex; }
+
+  .qbox {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
+    min-height: 54px; padding: 8px 12px;
+    background: var(--surface-paper);
+    border: 1px solid var(--grey-200); border-radius: var(--r-field);
+    cursor: text; transition: border-color 0.2s ease-in-out;
+  }
+  .qbox:hover { border-color: var(--grey-300); }
+  .qbox.focus { border: 2px solid var(--primary-main); padding: 7px 11px; }
+  .qbox .q-icon { color: var(--text-secondary); display: flex; flex: none; margin: 0 2px; }
+  .qbox input {
+    flex: 1 1 140px; min-width: 130px; border: 0; outline: none;
+    background: none; color: var(--text-primary);
+    font-family: var(--ui); font-size: 14px; padding: 4px 2px;
+  }
+  .qbox input::placeholder { color: var(--text-very-subtle); }
+
+  /* MuiChip colorPrimary, light: #f0f1fb25 fill, #4456b8 text, #f0f1fb50 border. */
+  .token {
+    display: inline-flex; align-items: center;
+    border: 1px solid var(--chip-border); border-radius: var(--r-pill);
+    background: var(--chip-bg);
+    overflow: hidden; max-width: 100%; font-weight: 500;
+  }
+  .token .t-attr {
+    font-family: var(--mono); font-size: 11px; font-weight: 500;
+    color: var(--chip-fg); padding: 4px 2px 4px 10px; white-space: nowrap;
+  }
+  .token .t-op { font-family: var(--mono); font-size: 11px; color: var(--chip-fg); opacity: 0.75; padding: 4px 3px; }
+  .token .t-val {
+    font-family: var(--mono); font-size: 11px; color: var(--text-primary);
+    padding: 4px 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 240px;
+  }
+  .token .t-x {
+    appearance: none; border: 0; background: none; cursor: pointer;
+    color: var(--chip-fg); padding: 4px 8px 4px 4px; line-height: 0; opacity: 0.75;
+  }
+  .token .t-x:hover { opacity: 1; }
+  .token.free .t-attr { font-family: var(--ui); }
+
+  .q-hint { margin: 8px 2px 0; font-size: 13px; line-height: 1.5; color: var(--text-subtle); }
+  .q-hint b { color: var(--text-secondary); font-weight: 600; }
+
+  /* ---------------- Popovers ---------------- */
+
+  .pop {
+    position: absolute; z-index: 40; top: calc(100% + 4px); left: 0; right: 0;
+    background: var(--surface-paper);
+    border: 1px solid var(--border-subtle); border-radius: var(--r-card);
+    box-shadow: var(--shadow-xl); padding: 8px; display: none;
+  }
+  .pop.open { display: block; }
+  .pop-head {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 10px 10px; margin-bottom: 4px; border-bottom: 1px solid var(--border-subtle);
+  }
+  .pop-head .ph-attr { font-family: var(--mono); font-size: 12px; font-weight: 600; color: var(--primary-main); }
+  .pop-head .ph-desc { font-size: 13px; color: var(--text-subtle); flex: 1 1 auto; }
+  .pop-list { max-height: 320px; overflow-y: auto; }
+  .pop-group {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase;
+    color: var(--text-secondary); padding: 10px 10px 4px;
+  }
+  .sg {
+    display: flex; align-items: baseline; gap: 10px;
+    padding: 8px 10px; border-radius: var(--r-field); cursor: pointer;
+  }
+  .sg:hover, .sg.hot { background: var(--surface-hover); }
+  .sg.hot { background: var(--indigo-50); }
+  .sg .sg-key { font-family: var(--mono); font-size: 13px; color: var(--text-primary); flex: none; }
+  .sg .sg-key em { font-style: normal; color: var(--primary-main); font-weight: 600; }
+  .sg .sg-desc {
+    font-size: 13px; color: var(--text-subtle); flex: 1 1 auto; min-width: 0;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .sg .sg-n { font-family: var(--mono); font-size: 11px; color: var(--text-very-subtle); flex: none; font-variant-numeric: tabular-nums; }
+  .sg .sg-on { flex: none; color: var(--primary-main); display: flex; }
+  .pop-empty { padding: 16px 10px; font-size: 13px; color: var(--text-subtle); }
+  .pop-note {
+    margin: 6px 2px 2px; padding: 10px 12px;
+    background: var(--surface-hover); border-radius: var(--r-field);
+    font-size: 13px; color: var(--text-subtle); line-height: 1.5;
+  }
+  .opt {
+    display: flex; align-items: center; gap: 10px; padding: 8px 10px;
+    border-radius: var(--r-field); cursor: pointer; font-size: 14px; color: var(--text-primary);
+  }
+  .opt:hover { background: var(--surface-hover); }
+  .opt input { accent-color: var(--primary-main); margin: 0; flex: none; width: 15px; height: 15px; }
+  .opt .opt-label { flex: 1 1 auto; min-width: 0; }
+  .opt .opt-field {
+    display: block; font-family: var(--mono); font-size: 11px; color: var(--text-very-subtle);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .opt.disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* MuiButton: none-transform, 500, 8px radius, 8px/16px, outlined 1.5px. */
+  .btn {
+    appearance: none; font-family: var(--ui); font-size: 14px; font-weight: 500;
+    color: var(--text-primary); background: var(--surface-paper);
+    border: 1.5px solid var(--grey-300); border-radius: var(--r-field);
+    padding: 8px 16px; cursor: pointer; text-transform: none;
+    display: inline-flex; align-items: center; gap: 8px; white-space: nowrap;
+    transition: all 0.2s ease-in-out;
+  }
+  .btn:hover { background: var(--surface-hover); border-color: var(--primary-light); }
+  .btn svg { flex: none; }
+  .btn.tiny { font-size: 13px; padding: 6px 12px; }
+  .btn .btn-ico { display: flex; }
+  /* FiberManualRecord at 12px: inherits until live, then success green. */
+  .btn .live-dot {
+    width: 12px; height: 12px; border-radius: 50%; flex: none;
+    background: currentColor; opacity: 0.45;
+  }
+  .btn .live-dot.on { background: #4caf50; opacity: 1; }
+  .btn.is-live { border-color: #4caf50; color: var(--text-primary); }
+  @media (prefers-reduced-motion: no-preference) {
+    .btn .live-dot.on { animation: live-pulse 1.6s ease-in-out infinite; }
+  }
+  @keyframes live-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+  .btn.link {
+    border: 0; background: none; color: var(--primary-main); font-weight: 500; padding: 6px 8px;
+  }
+  .btn.link:hover { background: var(--surface-hover); text-decoration: underline; }
+
+  /* ---------------- Cards ---------------- */
+
+  /* MuiCard: 12px radius, grey[100] border, two-stop card shadow. */
+  .card {
+    background: var(--surface-paper);
+    border: 1px solid var(--grey-100);
+    border-radius: var(--r-card);
+    box-shadow: var(--shadow-card);
+  }
+
+  .lenses { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); border-bottom: 1px solid var(--grey-100); }
+  @media (max-width: 900px) { .lenses { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .lens {
+    appearance: none; background: none; border: 0;
+    border-right: 1px solid var(--grey-100);
+    padding: 16px 20px; text-align: left; cursor: pointer;
+    display: flex; flex-direction: column; gap: 4px; font-family: var(--ui);
+    transition: background-color 0.2s ease-in-out;
+  }
+  .lens:last-child { border-right: 0; }
+  .lens:hover { background: var(--surface-hover); }
+  .lens[aria-pressed="true"] { background: var(--indigo-50); }
+  .lens-k {
+    font-size: 13px; font-weight: 500; color: var(--text-subtle);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .lens-dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+  .lens-v { font-size: 28px; font-weight: 700; color: var(--text-primary); font-variant-numeric: tabular-nums; line-height: 1.2; }
+  .lens-n { font-size: 13px; color: var(--text-very-subtle); }
+  .lens.is-quiet .lens-v { color: var(--text-very-subtle); }
+
+  .tl-head { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; padding: 16px 20px 0; }
+  .tl-title { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+  .tl-sub { font-size: 13px; color: var(--text-very-subtle); }
+  .tl-grow { flex: 1 1 auto; }
+  .legend { display: flex; gap: 4px; flex-wrap: wrap; }
+  .lg {
+    appearance: none; border: 1px solid transparent; background: none;
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: var(--ui); font-size: 13px; font-weight: 500; color: var(--text-secondary);
+    padding: 4px 12px; border-radius: var(--r-pill); cursor: pointer;
+  }
+  .lg:hover { background: var(--surface-hover); }
+  .lg[aria-pressed="true"] { background: var(--indigo-50); color: var(--primary-dark); }
+  .lg-sw { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+  .tl-body { padding: 8px 20px 16px; position: relative; }
+  .chart-toggle { display: flex; justify-content: flex-end; padding: 0 12px 8px; }
+  .chart-toggle:only-of-type { padding-top: 8px; }
+  .tl-body svg { display: block; width: 100%; height: auto; }
+  .tl-tip {
+    position: absolute; z-index: 20; pointer-events: none;
+    background: #1a1d26; color: #e5e7eb;
+    border-radius: var(--r-field); padding: 10px 12px;
+    font-size: 13px; line-height: 1.5; white-space: nowrap;
+    box-shadow: var(--shadow-md); display: none;
+  }
+  .tl-tip.show { display: block; }
+  .tl-tip .t-h { font-family: var(--mono); font-size: 11px; opacity: 0.7; margin-bottom: 6px; }
+  .tl-tip .t-r { display: flex; align-items: center; gap: 8px; }
+  .tl-tip .t-sw { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+  .tl-tip .t-n { font-variant-numeric: tabular-nums; margin-left: auto; padding-left: 16px; }
+
+  /* LogsActions: stats left, actions right, 16px margins. */
+  .rtbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+  .rtbar .meta { display: flex; flex-direction: column; }
+  .rtbar .meta-1 { font-size: 13px; line-height: 1.5; color: var(--text-body); }
+  .rtbar .meta-1 b { color: var(--text-primary); font-weight: 600; font-variant-numeric: tabular-nums; }
+  .rtbar .meta-2 { font-size: 13px; line-height: 1.5; color: var(--text-body); }
+  .rtbar .grow { display: none; }
+  .rtbar-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+  /* ---------------- Table ----------------
+     Follows the runtime-logs view: sticky header at 0.75rem bold with
+     12px/8px padding, rows at 4px/8px, grey[100] rules, monospace 11px for
+     machine values, and an internal scroll container. */
+
+  .tablewrap { overflow: auto; max-height: calc(100vh - 300px); }
+  table.events { width: 100%; border-collapse: collapse; min-width: 940px; }
+  table.events thead th {
+    position: sticky; top: 0; z-index: 3;
+    background: var(--surface-paper);
+    text-align: left; font-size: 11px; font-weight: 700; color: var(--text-secondary);
+    padding: 12px 8px; border-bottom: 1px solid var(--grey-100); white-space: nowrap;
+  }
+  table.events thead th:first-child { padding-left: 20px; }
+  table.events thead th:last-child { padding-right: 20px; }
+  table.events tbody td {
+    padding: 4px 8px; border-bottom: 1px solid var(--grey-100);
+    vertical-align: middle; font-size: 13px; color: var(--text-body);
+  }
+  table.events tbody td:first-child { padding-left: 17px; }
+  table.events tbody td:last-child { padding-right: 20px; }
+  table.events tbody tr { cursor: pointer; }
+  table.events tbody tr:hover td { background: var(--action-hover); }
+  table.events tbody tr:hover .row-copy { opacity: 1; pointer-events: auto; }
+  table.events tbody tr[aria-selected="true"] td { background: var(--action-selected); }
+  table.events tbody tr:last-child td { border-bottom: 0; }
+
+  /* Outcome stripe on the row's leading edge. */
+  table.events tbody td.c-time { border-left: 3px solid transparent; }
+  tr.r-denied td.c-time { border-left-color: var(--warning-main); }
+  tr.r-failure td.c-time { border-left-color: var(--error-main); }
+  tr.r-unauthenticated td.c-time { border-left-color: var(--grey-300); }
+
+  .t-abs { font-family: var(--mono); font-size: 11px; color: var(--text-primary); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .t-rel { font-size: 11px; color: var(--text-very-subtle); white-space: nowrap; }
+
+  .actor { display: flex; align-items: center; gap: 8px; min-width: 0; }
+  .avatar {
+    width: 24px; height: 24px; border-radius: 50%; flex: none;
+    display: grid; place-items: center;
+    font-size: 10px; font-weight: 600; color: #fff; background: var(--primary-main);
+  }
+  .avatar.sa { background: #0f766e; }
+  .avatar.anon { background: var(--grey-400); }
+  .actor-txt { min-width: 0; }
+  .actor-id { font-size: 13px; color: var(--text-body); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 190px; }
+  .actor-sub { font-size: 11px; color: var(--text-very-subtle); }
+
+  .action-cell code { font-family: var(--mono); font-size: 11px; color: var(--text-primary); }
+
+  /* LogLevel chip: 0.6rem bold, 14px tall, X.light fill, X.dark text,
+     1px X.main outline. */
+  .action-verb {
+    display: inline-block; font-size: 9px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.02em;
+    padding: 0 4px; margin-right: 8px; border-radius: var(--r-pill);
+    min-width: 40px; text-align: center; line-height: 14px;
+    background: var(--surface-disabled); color: var(--text-subtle);
+    outline: 1px solid var(--grey-300);
+  }
+  .action-verb.create { background: var(--success-light); color: var(--success-dark); outline-color: var(--success-main); }
+  .action-verb.delete { background: var(--error-light); color: var(--error-dark); outline-color: var(--error-main); }
+  .action-verb.update { background: var(--info-light); color: var(--info-dark); outline-color: var(--info-main); }
+
+  .none { color: var(--text-very-subtle); font-style: italic; font-size: 12px; }
+  .none-why { display: block; font-size: 11px; color: var(--text-very-subtle); font-style: normal; }
+
+  .res-name { font-family: var(--mono); font-size: 11px; color: var(--text-primary); }
+  .res-type { font-size: 11px; color: var(--text-very-subtle); }
+  .scope { font-size: 11px; color: var(--text-body); line-height: 1.5; }
+  .scope .sep { color: var(--text-very-subtle); margin: 0 3px; }
+  .scope .cluster { font-style: italic; color: var(--text-very-subtle); }
+
+  /* Result badge, same chip form as the log-level chip. */
+  .pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 11px; font-weight: 500; line-height: 16px;
+    padding: 1px 10px; border-radius: var(--r-pill); white-space: nowrap;
+    background: var(--neutral-light); color: var(--neutral-dark);
+    outline: 1px solid var(--neutral-main);
+  }
+  .pill::before { content: ""; width: 8px; height: 8px; border-radius: 50%; flex: none; background: currentColor; }
+  .pill.success { background: var(--success-light); color: var(--success-dark); outline-color: var(--success-main); }
+  .pill.failure { background: var(--error-light); color: var(--error-dark); outline-color: var(--error-main); }
+  .pill.denied { background: var(--warning-light); color: var(--warning-dark); outline-color: var(--warning-main); }
+  .pill.unauthenticated { background: var(--surface-disabled); color: var(--text-subtle); outline-color: var(--grey-400); }
+
+  .surface { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-body); }
+  .surface .o-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--grey-400); flex: none; }
+  .surface.mcp { color: var(--primary-dark); }
+  .surface.mcp .o-dot { background: currentColor; }
+  .mono-sm { font-family: var(--mono); font-size: 11px; color: var(--text-body); }
+
+  .row-copy {
+    appearance: none; border: 0; background: none; cursor: pointer;
+    color: var(--text-secondary); padding: 4px; border-radius: 50%; line-height: 0;
+    opacity: 0; pointer-events: none; transition: opacity 0.15s ease;
+  }
+  .row-copy:hover { background: var(--surface-hover); color: var(--text-primary); }
+  .row-copy:focus-visible { opacity: 1; pointer-events: auto; }
+
+  .empty { text-align: center; padding: 32px; color: var(--text-secondary); }
+  .empty h3 { margin: 0 0 8px; font-size: 16px; font-weight: 600; color: var(--text-primary); }
+  .empty p { margin: 0 auto 16px; font-size: 14px; color: var(--text-secondary); max-width: 52ch; line-height: 1.6; }
+
+  .loadmore {
+    display: flex; justify-content: center; align-items: center; gap: 16px;
+    padding: 16px; border-top: 1px solid var(--grey-100);
+  }
+  .loadmore span { font-size: 13px; color: var(--text-very-subtle); }
+
+  /* ---------------- Drawer ---------------- */
+
+  .scrim { position: fixed; inset: 0; z-index: 60; background: rgba(17, 24, 39, 0.32); display: none; }
+  .scrim.open { display: block; }
+  .drawer {
+    position: fixed; z-index: 61; top: 0; right: 0; bottom: 0;
+    width: min(540px, 100%); background: var(--surface-paper);
+    border-left: 1px solid var(--border-default); box-shadow: var(--shadow-xl);
+    display: none; flex-direction: column;
+  }
+  .drawer.open { display: flex; }
+  .dr-head { padding: 20px 24px 16px; border-bottom: 1px solid var(--border-subtle); }
+  .dr-eyebrow {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 10px;
+    font-size: 11px; font-weight: 600; letter-spacing: 0.5px;
+    text-transform: uppercase; color: var(--text-secondary);
+  }
+  .dr-eyebrow .grow { flex: 1 1 auto; }
+  .dr-x {
+    appearance: none; border: 0; background: none; cursor: pointer;
+    color: var(--text-secondary); padding: 6px; border-radius: 50%; line-height: 0;
+  }
+  .dr-x:hover { background: var(--surface-hover); color: var(--text-primary); }
+  .dr-title { font-family: var(--mono); font-size: 16px; font-weight: 600; color: var(--text-primary); word-break: break-word; }
+  .dr-meta { margin-top: 10px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .dr-body { overflow-y: auto; padding: 0 24px 24px; flex: 1 1 auto; }
+  .dr-sec { padding: 20px 0 4px; }
+  .dr-sec + .dr-sec { border-top: 1px solid var(--border-subtle); }
+  .dr-sec h4 {
+    margin: 0 0 12px; font-size: 11px; font-weight: 700;
+    letter-spacing: 0.5px; text-transform: uppercase; color: var(--text-secondary);
+  }
+  /* Log-detail metadata conventions: bold 11px keys, monospace 11px values. */
+  .kv { display: grid; grid-template-columns: 130px minmax(0, 1fr); gap: 8px 12px; align-items: baseline; }
+  .kv dt { font-size: 11px; font-weight: 700; color: var(--text-secondary); }
+  .kv dd { margin: 0; font-size: 13px; color: var(--text-body); word-break: break-word; }
+  .kv dd.mono { font-family: var(--mono); font-size: 11px; }
+  .kv dd .hint { display: block; font-size: 11px; color: var(--text-very-subtle); margin-top: 3px; font-family: var(--ui); line-height: 1.5; }
+  .kv dd .absent { color: var(--text-very-subtle); font-style: italic; }
+  .kv dd .drill {
+    appearance: none; border: 0; background: none; cursor: pointer; padding: 0;
+    font-family: inherit; font-size: inherit; color: var(--primary-main); text-align: left;
+  }
+  .kv dd .drill:hover { text-decoration: underline; }
+
+  .path { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+  .path-seg {
+    display: inline-flex; align-items: baseline; gap: 6px;
+    background: var(--surface-hover); border: 1px solid var(--border-subtle);
+    border-radius: var(--r-field); padding: 4px 10px;
+  }
+  .path-seg .k { font-size: 10px; letter-spacing: 0.5px; text-transform: uppercase; color: var(--text-very-subtle); }
+  .path-seg .v { font-family: var(--mono); font-size: 11px; color: var(--text-primary); }
+  .path .arrow { color: var(--text-very-subtle); }
+
+  /* fullLogMessage: monospace 11px, paper fill, divider border. */
+  .dr-json {
+    margin: 0; padding: 12px;
+    background: var(--surface-hover);
+    border: 1px solid var(--border-default); border-radius: var(--r-field);
+    overflow: auto; max-height: 320px;
+    font-family: var(--mono); font-size: 11px; line-height: 1.6;
+    color: var(--text-body); white-space: pre-wrap; tab-size: 2;
+  }
+  .dr-json .j-k { color: var(--primary-main); }
+  .dr-json .j-s { color: var(--success-main); }
+  .dr-json .j-n { color: var(--error-main); }
+  .sec-head-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .sec-head-row h4 { margin: 0; flex: 1 1 auto; }
+
+  .related {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 12px 14px; border-radius: var(--r-field);
+    background: var(--info-light); color: var(--info-dark);
+    font-size: 13px; line-height: 1.5;
+  }
+  .related svg { flex: none; margin-top: 2px; }
+  .related.warn { background: var(--warning-light); color: var(--warning-dark); }
+</style>
+
+<div class="app">
+  <nav class="sidebar" aria-label="sidebar nav">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">
+        <svg width="24" height="24" viewBox="0 0 127 134" xmlns="http://www.w3.org/2000/svg">
+          <path fill="var(--logo-wordmark)" d="M84.19,51.85c-.53-.94-1.53-1.52-2.61-1.52h-18.12V3c0-1.66-1.34-3-3-3s-3,1.34-3,3v47.33h-4.04c-1.66,0-3,1.34-3,3s1.34,3,3,3h4.04v55.13c.36-.07.72-.14,1.09-.2,1.63-.25,3.28-.27,4.91-.08v-21.83l2-3.33,18.69-31.16c.56-.93.57-2.08.04-3.02ZM65.46,74.36l-2,3.33v-21.37h12.82l-10.82,18.04Z"/>
+          <path fill="var(--logo-accent)" d="M106.68,91.45c-8.07-.66-11.22,2.03-18.2,3.75-9.65,2.37-14.21-2.28-22.97-3.39-.02,0-.03,0-.05,0v7.3c6.1,1.19,11.61,4.7,18.55,4.44,7.74-.29,13.42-5.32,21.6-4.79,3.66.24,7.09,1.82,10.64,3.1,1.71-2.01,3.33-4.1,4.81-6.3-4.58-1.09-8.51-3.62-14.38-4.1Z"/>
+          <path fill="var(--logo-accent)" d="M55.46,99.52v-7.43c-7.68,1.44-12.26,5.33-21.26,3.12-6.98-1.72-10.13-4.41-18.2-3.75-5.8.48-9.72,2.96-14.24,4.07,1.48,2.19,3.09,4.28,4.8,6.29,3.5-1.28,6.9-2.82,10.52-3.06,8.18-.53,13.86,4.5,21.6,4.79,6.26.23,11.37-2.59,16.79-4.02Z"/>
+          <path fill="var(--logo-accent)" d="M97.61,113.85c-.97,0-6.66,3.17-8.75,3.69-8.28,2.05-15.81-2.74-24.72-4.12-1.85-.29-3.73-.29-5.58,0-8.91,1.38-16.44,6.17-24.72,4.12-2.09-.52-7.79-3.68-8.75-3.69-.31,0-.53.07-.7.19-.68.48-.22,1.85.49,3.19.83.49,1.66.97,2.51,1.43,3.32,1.78,6.79,3.3,10.39,4.55,1.71.6,3.45,1.14,5.22,1.61,4.99-.99,10.17-3.04,15.1-4,2.15-.41,4.36-.41,6.5,0,4.96.96,10.18,3.04,15.2,4.01,1.79-.47,3.55-1.02,5.29-1.62,3.49-1.21,6.87-2.68,10.09-4.4.87-.46,1.73-.95,2.57-1.44.76-1.39,1.27-2.83.57-3.33-.16-.12-.39-.19-.7-.19Z"/>
+        </svg>
+      </span>
+      <span class="brand-name">OpenChoreo</span>
+    </div>
+
+    <div class="nav">
+      <a class="nav-item" href="#" onclick="return false">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        Search
+      </a>
+      <div class="nav-sep"></div>
+      <a class="nav-item" href="#" onclick="return false">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/></svg>
+        Home
+      </a>
+      <a class="nav-item" href="#" onclick="return false">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3l3 5h-6z"/><path d="M5 21l3-5H2z"/><path d="M19 21l3-5h-6z"/><path d="M12 8v5M8.5 16l3.5-3 3.5 3"/></svg>
+        Catalog
+      </a>
+      <a class="nav-item" href="#" onclick="return false">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="6" cy="7" r="2.4"/><circle cx="18" cy="12" r="2.4"/><circle cx="7" cy="18" r="2.4"/><path d="M8.4 8.1 15.6 11M8.6 16.4 15.9 13.6"/></svg>
+        Platform
+      </a>
+      <a class="nav-item" href="#" aria-current="page">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h4"/></svg>
+        Audit Logs
+      </a>
+      <a class="nav-item" href="#" onclick="return false">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M14.5 9.2a2.6 2.6 0 0 0-2.5-1.4c-1.5 0-2.5.8-2.5 2s1 1.7 2.5 2 2.6.8 2.6 2.1-1.1 2.1-2.6 2.1a2.7 2.7 0 0 1-2.6-1.5M12 6v12"/></svg>
+        Cost Insights
+      </a>
+      <a class="nav-item" href="#" onclick="return false">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M10 4h4v3a2 2 0 1 0 0 4v3h-4v-2a2 2 0 1 0 0-4z"/><path d="M14 7h6v4a2 2 0 1 0 0 4v5H4v-6a2 2 0 1 0 0-4V7h6"/></svg>
+        APIs
+      </a>
+      <a class="nav-item" href="#" onclick="return false">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>
+        Create...
+      </a>
+    </div>
+
+    <div class="nav-spacer"></div>
+    <div class="nav-sep"></div>
+    <div class="nav">
+      <a class="nav-item" href="#" onclick="return false">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/></svg>
+        Settings
+      </a>
+      <a class="nav-item" href="#" onclick="return false">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8"/><path d="M16 8l4 4-4 4M20 12H9"/></svg>
+        Sign Out
+      </a>
+    </div>
+  </nav>
+
+  <div class="main">
+    <header class="banner">
+      <div>
+        <h1>Audit Logs</h1>
+        <p>Who changed what, where, and whether it was allowed</p>
+      </div>
+      <div class="banner-grow"></div>
+      <span class="proto-pill">Prototype · sample data</span>
+    </header>
+
+    <div class="page">
+      <main class="workspace">
+          <div>
+            <div class="querybar">
+              <div class="field" id="q-field"></div>
+              <div class="field" id="range-field"></div>
+              <div class="field" id="columns-field"></div>
+            </div>
+            <p class="q-hint" id="q-hint"></p>
+          </div>
+
+          <section class="card" aria-label="Activity summary">
+            <div class="lenses" id="lenses"></div>
+            <div class="tl-head" id="tl-head">
+              <span class="tl-title">Events over time</span>
+              <span class="tl-sub" id="tl-sub"></span>
+              <span class="tl-grow"></span>
+              <div class="legend" id="legend"></div>
+            </div>
+            <div class="tl-body" id="tl-body"><div class="tl-tip" id="tl-tip"></div></div>
+            <div class="chart-toggle" id="chart-toggle"></div>
+          </section>
+
+          <div class="rtbar">
+            <div class="meta">
+              <span class="meta-1" id="result-count"></span>
+              <span class="meta-2" id="result-updated"></span>
+            </div>
+            <span class="grow"></span>
+            <div class="rtbar-actions" id="rtbar-actions"></div>
+          </div>
+
+          <section class="card">
+            <div class="tablewrap">
+              <table class="events" id="events-table">
+                <thead><tr id="thead-row"></tr></thead>
+                <tbody id="tbody"></tbody>
+              </table>
+            </div>
+            <div id="table-foot"></div>
+          </section>
+      </main>
+    </div>
+  </div>
+</div>
+
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="dr-title"></aside>
+
+<script>
+/* ==================================================================
+   Vocabulary — actions, operationIds, categories and resource kinds are
+   from the repository's generated coverage matrices — 114 audited REST
+   operations in openchoreo-api across 37 resource kinds, plus observer's
+   single one (UpdateIncident) — and the record shape is schema v1.0.
+   ================================================================== */
+
+/* Build switch. `false` produces the table-first variant: the timeline is not
+   rendered, its markup is removed at start-up, and no toggle is offered — so
+   the chart cannot be brought back. The two shipped files differ in this line
+   and nothing else. */
+const CHART_ENABLED = true;
+
+const RESOURCE_GROUPS = [
+  { group: 'Developer resources', types: [
+      'component', 'componentrelease', 'project', 'projectrelease', 'projectreleasebinding',
+      'releasebinding', 'resource', 'resourcerelease', 'resourcereleasebinding',
+      'workload', 'workflowrun' ] },
+  { group: 'Platform resources', types: [
+      'environment', 'dataplane', 'deploymentpipeline', 'namespace', 'workflow',
+      'workflowplane', 'observabilityplane', 'observabilityalertsnotificationchannel',
+      'secret', 'secretreference', 'gitsecret', 'trait', 'componenttype', 'projecttype',
+      'resourcetype' ] },
+  { group: 'Authorization', types: [
+      'authzrole', 'authzrolebinding', 'clusterauthzrole', 'clusterauthzrolebinding' ] },
+  { group: 'Cluster-scoped', types: [
+      'clustercomponenttype', 'clusterdataplane', 'clusterprojecttype', 'clusterresourcetype',
+      'clustertrait', 'clusterworkflow', 'clusterworkflowplane', 'clusterobservabilityplane' ] },
+  // observer's only audited operation — UpdateIncident.
+  { group: 'Observability', types: ['incident'] },
+];
+
+/* resource.type -> [action word-form, operationId word-form, category].
+   Taken from the generated coverage matrix, because the two forms genuinely
+   differ: the resource type is a concatenated lowercase kind
+   (resourcereleasebinding) while the action is snake_cased
+   (update_resource_release_binding). Deriving one from the other by
+   title-casing produced UpdateResourcereleasebinding, which no operation is
+   called. */
+const TYPE_META = {
+  authzrole: ['namespace_role', 'NamespaceRole', 'authorization'],
+  authzrolebinding: ['namespace_role_binding', 'NamespaceRoleBinding', 'authorization'],
+  clusterauthzrole: ['cluster_role', 'ClusterRole', 'authorization'],
+  clusterauthzrolebinding: ['cluster_role_binding', 'ClusterRoleBinding', 'authorization'],
+  clustercomponenttype: ['cluster_component_type', 'ClusterComponentType', 'management'],
+  clusterdataplane: ['cluster_data_plane', 'ClusterDataPlane', 'management'],
+  clusterobservabilityplane: ['cluster_observability_plane', 'ClusterObservabilityPlane', 'management'],
+  clusterprojecttype: ['cluster_project_type', 'ClusterProjectType', 'management'],
+  clusterresourcetype: ['cluster_resource_type', 'ClusterResourceType', 'management'],
+  clustertrait: ['cluster_trait', 'ClusterTrait', 'management'],
+  clusterworkflow: ['cluster_workflow', 'ClusterWorkflow', 'management'],
+  clusterworkflowplane: ['cluster_workflow_plane', 'ClusterWorkflowPlane', 'management'],
+  component: ['component', 'Component', 'management'],
+  componentrelease: ['component_release', 'ComponentRelease', 'management'],
+  componenttype: ['component_type', 'ComponentType', 'management'],
+  dataplane: ['data_plane', 'DataPlane', 'management'],
+  deploymentpipeline: ['deployment_pipeline', 'DeploymentPipeline', 'management'],
+  environment: ['environment', 'Environment', 'management'],
+  gitsecret: ['git_secret', 'GitSecret', 'management'],
+  namespace: ['namespace', 'Namespace', 'management'],
+  observabilityalertsnotificationchannel: ['observability_alerts_notification_channel', 'ObservabilityAlertsNotificationChannel', 'management'],
+  observabilityplane: ['observability_plane', 'ObservabilityPlane', 'management'],
+  project: ['project', 'Project', 'management'],
+  projectrelease: ['project_release', 'ProjectRelease', 'management'],
+  projectreleasebinding: ['project_release_binding', 'ProjectReleaseBinding', 'management'],
+  projecttype: ['project_type', 'ProjectType', 'management'],
+  releasebinding: ['release_binding', 'ReleaseBinding', 'management'],
+  resource: ['resource', 'Resource', 'management'],
+  resourcerelease: ['resource_release', 'ResourceRelease', 'management'],
+  resourcereleasebinding: ['resource_release_binding', 'ResourceReleaseBinding', 'management'],
+  resourcetype: ['resource_type', 'ResourceType', 'management'],
+  secret: ['secret', 'Secret', 'management'],
+  secretreference: ['secret_reference', 'SecretReference', 'management'],
+  trait: ['trait', 'Trait', 'management'],
+  workflow: ['workflow', 'Workflow', 'management'],
+  workflowplane: ['workflow_plane', 'WorkflowPlane', 'management'],
+  workflowrun: ['workflow_run', 'WorkflowRun', 'management'],
+  workload: ['workload', 'Workload', 'management'],
+  incident: ['incident', 'Incident', 'management'],
+};
+
+/* The 80 operations reachable through an MCP tool. MCP wraps the REST
+   API and emits from the same operation table, so action and
+   operation_id never vary with surface — but an operation with no tool
+   binding can never produce a surface:mcp event, and this is that set. */
+const MCP_BOUND = new Set([
+  'CreateClusterComponentType', 'CreateClusterProjectType', 'CreateClusterResourceType',
+  'CreateClusterRole', 'CreateClusterRoleBinding', 'CreateClusterTrait', 'CreateClusterWorkflow',
+  'CreateComponent', 'CreateComponentType', 'CreateDeploymentPipeline', 'CreateEnvironment',
+  'CreateNamespace', 'CreateNamespaceRole', 'CreateNamespaceRoleBinding', 'CreateProject',
+  'CreateProjectRelease', 'CreateProjectReleaseBinding', 'CreateProjectType',
+  'CreateReleaseBinding', 'CreateResource', 'CreateResourceRelease',
+  'CreateResourceReleaseBinding', 'CreateResourceType', 'CreateSecretReference', 'CreateTrait',
+  'CreateWorkflow', 'CreateWorkflowRun', 'CreateWorkload', 'DeleteClusterComponentType',
+  'DeleteClusterProjectType', 'DeleteClusterResourceType', 'DeleteClusterRole',
+  'DeleteClusterRoleBinding', 'DeleteClusterTrait', 'DeleteClusterWorkflow', 'DeleteComponent',
+  'DeleteComponentRelease', 'DeleteComponentType', 'DeleteDeploymentPipeline',
+  'DeleteEnvironment', 'DeleteNamespaceRole', 'DeleteNamespaceRoleBinding', 'DeleteProject',
+  'DeleteProjectRelease', 'DeleteProjectReleaseBinding', 'DeleteProjectType',
+  'DeleteReleaseBinding', 'DeleteResource', 'DeleteResourceRelease',
+  'DeleteResourceReleaseBinding', 'DeleteResourceType', 'DeleteSecretReference', 'DeleteTrait',
+  'DeleteWorkflow', 'DeleteWorkload', 'GenerateRelease', 'UpdateClusterComponentType',
+  'UpdateClusterProjectType', 'UpdateClusterResourceType', 'UpdateClusterRole',
+  'UpdateClusterRoleBinding', 'UpdateClusterTrait', 'UpdateClusterWorkflow', 'UpdateComponent',
+  'UpdateComponentType', 'UpdateDeploymentPipeline', 'UpdateEnvironment', 'UpdateNamespaceRole',
+  'UpdateNamespaceRoleBinding', 'UpdateProject', 'UpdateProjectReleaseBinding',
+  'UpdateProjectType', 'UpdateReleaseBinding', 'UpdateResource', 'UpdateResourceReleaseBinding',
+  'UpdateResourceType', 'UpdateSecretReference', 'UpdateTrait', 'UpdateWorkflow', 'UpdateWorkload'
+]);
+
+const CLUSTER_SCOPED = new Set(RESOURCE_GROUPS[3].types.concat(['clusterauthzrole', 'clusterauthzrolebinding']));
+
+const VERBS = ['create', 'update', 'delete', 'trigger', 'generate', 'exec'];
+
+/* Result values are exactly the four the Result constants define. There is no
+   `pending` — the two-event write-ahead model is proposed (EM-13b), not built,
+   so a filter offering it would promise a value no event can carry. */
+const RESULTS = [
+  { id: 'success',         label: 'Success',         color: 'var(--chart-success)', note: 'The action completed.' },
+  { id: 'failure',         label: 'Failed',          color: 'var(--chart-failure)', note: 'The action was attempted and errored.' },
+  { id: 'denied',          label: 'Denied',          color: 'var(--chart-denied)',  note: 'An authenticated subject was refused by policy.' },
+  { id: 'unauthenticated', label: 'Unauthenticated', color: 'var(--chart-unauth)',  note: 'Rejected at the boundary — no subject, no action resolved.' },
+];
+const RESULT_COLOR = Object.fromEntries(RESULTS.map(r => [r.id, r.color]));
+const CATEGORIES = ['management', 'authorization'];
+const SURFACES = ['rest', 'mcp'];
+
+/* Actor types are operator-configured (auth.subjects / auth.subject_types),
+   plus the hard-coded "anonymous" ExtractActor falls back to. These two are
+   what ships in config.yaml; a deployment that declares more would widen this
+   list, so a real client should read it from config rather than hard-code it. */
+const ACTOR_TYPES = ['user', 'service_account', 'anonymous'];
+
+/* User agents, by the client that sends them. Captured from the request
+   header, so — like source_ip — it is client-supplied and unverifiable; it
+   says what the caller *claimed* to be. Its value is telling apart a portal
+   session from a CLI, a CI runner, or an agent, which no other field does:
+   surface says rest-or-mcp, and actor.type says user-or-service-account, but
+   neither distinguishes the browser from occ. */
+const USER_AGENTS = {
+  rest: [
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.2 Safari/605.1.15',
+    'occ/1.4.2 (darwin/arm64)',
+    'occ/1.4.2 (linux/amd64)',
+    'openchoreo-ci/2.1.0 (linux/amd64)',
+    'argo-workflows/3.6.2',
+    'Go-http-client/2.0',
+  ],
+  mcp: [
+    'claude-code/2.0.14 (mcp)',
+    'mcp-remote/0.1.9',
+    'openchoreo-portal-assistant/0.9.3 (mcp)',
+  ],
+};
+
+/* Which client a given actor plausibly uses, so the column is not noise: a
+   service account does not drive a browser. */
+function userAgentFor(actor, surface) {
+  if (surface === 'mcp') return pick(USER_AGENTS.mcp);
+  if (actor.type === 'service_account') {
+    return actor.id === 'sa-argo-workflows' ? 'argo-workflows/3.6.2' : 'openchoreo-ci/2.1.0 (linux/amd64)';
+  }
+  // A person is usually in the portal, sometimes at the CLI.
+  return chance(0.25) ? pick(['occ/1.4.2 (darwin/arm64)', 'occ/1.4.2 (linux/amd64)']) : pick(USER_AGENTS.rest.slice(0, 2));
+}
+
+/* Producers. Both binaries construct an emitter with their own name. */
+const PRODUCERS = ['openchoreo-api', 'observer'];
+
+/* Schema v1: every published record is stamped with this. major on a field
+   removal or a changed representation, minor on an addition. */
+const SCHEMA_VERSION = '1.0';
+
+/* actor.issuer is the token's iss claim, and it is what makes actor.id
+   unique — the same sub from two IdPs is two different subjects. This
+   instance runs Thunder. */
+const ISSUER = 'https://thunder.openchoreo.localhost:8080/oauth2/token';
+
+/* Environment is namespace-qualified — FormatDualScopedResourceName gives
+   "<namespace>/<environment>", not a bare environment name. */
+function envScoped(ns, env) { return ns + '/' + env; }
+
+/* Entitlements are one claim per subject type: `groups` for a user, `sub` for
+   a service account — the shape ExtractActor builds from EntitlementClaim. */
+const ACTORS = [
+  { id: 'admin@openchoreo.dev',    type: 'user',            short: 'AD', ents: { groups: ['cluster-admin'] } },
+  { id: 'dilani@openchoreo.dev',   type: 'user',            short: 'DI', ents: { groups: ['platform-engineer'] } },
+  { id: 'arun@openchoreo.dev',     type: 'user',            short: 'AR', ents: { groups: ['developer', 'url-shortener-team'] } },
+  { id: 'nimal@openchoreo.dev',    type: 'user',            short: 'NI', ents: { groups: ['developer', 'payments-team'] } },
+  { id: 'sanjula@openchoreo.dev',  type: 'user',            short: 'SA', ents: { groups: ['security-admin'] } },
+  { id: 'sa-ci-pipeline',          type: 'service_account', short: 'CI', ents: { sub: ['sa-ci-pipeline'] } },
+  { id: 'sa-argo-workflows',       type: 'service_account', short: 'AW', ents: { sub: ['sa-argo-workflows'] } },
+];
+const ANON_ACTOR = { id: 'anonymous', type: 'anonymous', short: '?', ents: null };
+
+/* session_id is the token's sid claim, which OIDC leaves optional — so it is
+   present for interactive logins and absent for client-credentials tokens.
+   That asymmetry is the point: it is what joins a record to an IdP login. */
+function sessionFor(actor) {
+  if (actor.type !== 'user') return null;
+  const hex = '0123456789abcdef';
+  return Array.from({ length: 8 }, () => hex[Math.floor(rnd() * 16)]).join('');
+}
+const ALL_ENTITLEMENTS = [...new Set(ACTORS.flatMap(a => Object.values(a.ents).flat()))].sort();
+
+const TENANCY = [
+  { namespace: 'default', projects: [
+      { name: 'url-shortener', components: ['snip-frontend', 'snip-api-service', 'snip-redis', 'snip-analytics-service', 'snip-postgres'] },
+      { name: 'sample',        components: ['sample-service'] },
+      { name: 'test',          components: ['test-service'] },
+      { name: 'default',       components: [] },
+  ]},
+  { namespace: 'payments', projects: [
+      { name: 'checkout', components: ['checkout-api', 'ledger-worker'] },
+      { name: 'billing',  components: ['invoice-service'] },
+  ]},
+];
+const ENVIRONMENTS = ['development', 'staging', 'production'];
+const ALL_PROJECTS = TENANCY.flatMap(t => t.projects.map(p => p.name));
+const ALL_COMPONENTS = TENANCY.flatMap(t => t.projects.flatMap(p => p.components));
+const ALL_NAMESPACES = TENANCY.map(t => t.namespace);
+
+/* No MCP tool name is recorded. Event.Metadata has no writer in production
+   code, so the event knows only that the call arrived through MCP
+   (surface) and which operation it resolved to (operation_id). The tool name
+   is not recoverable from the operation either, since several tools bind to
+   one operation. */
+
+function verbOf(action) { const v = action.split('_')[0]; return VERBS.includes(v) ? v : 'update'; }
+function categoryFor(type) { return (TYPE_META[type] || [, , 'management'])[2]; }
+function actionFor(verb, type) { return verb + '_' + TYPE_META[type][0]; }
+function opIdFor(verb, type) { return verb[0].toUpperCase() + verb.slice(1) + TYPE_META[type][1]; }
+
+let _s = 0x9e3779b9;
+function rnd() {
+  _s |= 0; _s = (_s + 0x6d2b79f5) | 0;
+  let t = Math.imul(_s ^ (_s >>> 15), 1 | _s);
+  t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+  return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+}
+const pick = a => a[Math.floor(rnd() * a.length)];
+const chance = p => rnd() < p;
+function uuid7(ts) {
+  const hex = '0123456789abcdef';
+  const h = n => Array.from({ length: n }, () => hex[Math.floor(rnd() * 16)]).join('');
+  const t = ts.toString(16).padStart(12, '0');
+  return `${t.slice(0, 8)}-${t.slice(8, 12)}-7${h(3)}-${hex[8 + Math.floor(rnd() * 4)]}${h(3)}-${h(12)}`;
+}
+function ipAddr() { return `10.42.${Math.floor(rnd() * 4)}.${1 + Math.floor(rnd() * 250)}`; }
+
+const NOW = new Date('2026-09-03T20:30:00');
+
+/* Live mode advances this; everything time-relative reads it rather than NOW,
+   so the window end and the "3d ago" column move as events arrive. NOW stays
+   the anchor the seeded backlog was generated against. */
+let CLOCK = new Date(NOW);
+const DAY = 86400000;
+
+function newEvent(when) {
+  const ts = new Date(when);
+  const type = chance(0.14) ? pick(RESOURCE_GROUPS[3].types)
+    : chance(0.16) ? pick(RESOURCE_GROUPS[2].types)
+    : chance(0.42) ? pick(RESOURCE_GROUPS[1].types)
+    : pick(RESOURCE_GROUPS[0].types);
+
+  let verb = chance(0.42) ? 'create' : chance(0.55) ? 'update' : 'delete';
+  if (type === 'component' && chance(0.12)) verb = 'exec';
+  if (type === 'componentrelease' && chance(0.4)) verb = 'generate';
+  if (type === 'releasebinding' && chance(0.2)) verb = 'trigger';
+
+  const special = verb === 'exec' ? ['exec_component', 'Exec']
+    : verb === 'generate' ? ['generate_release', 'GenerateRelease']
+    : verb === 'trigger' ? ['trigger_release_binding_cron_job', 'TriggerReleaseBindingCronJob']
+    : null;
+  const action = special ? special[0] : actionFor(verb, type);
+  const operationID = special ? special[1] : opIdFor(verb, type);
+
+  const category = categoryFor(type);
+  const isCluster = CLUSTER_SCOPED.has(type);
+
+  let actor;
+  if (category === 'authorization') actor = pick([ACTORS[0], ACTORS[4], ACTORS[1]]);
+  else if (isCluster) actor = pick([ACTORS[0], ACTORS[1]]);
+  else if (type === 'workflowrun' || type === 'componentrelease') actor = pick([ACTORS[5], ACTORS[6], ACTORS[2], ACTORS[3]]);
+  else actor = pick(ACTORS);
+
+  // Origin is the interface the call arrived through, and says nothing about
+  // who the caller is: a person can drive MCP just as an agent can drive REST.
+  //
+  // It is also the only thing that varies by surface. MCP wraps the REST API
+  // and its middleware emits from the same operation table (op :=
+  // binding.Operation), so action, category and operation_id are identical
+  // whichever way the call arrived. What does vary: an operation with no MCP
+  // tool binding can never produce a surface:mcp event.
+  const surface = (MCP_BOUND.has(operationID) && chance(0.16)) ? 'mcp' : 'rest';
+
+  // Hierarchy is namespace / project / component / resource, populated in the
+  // shared authz path. Environment sits alongside them in the published
+  // resource group but is not a tree level — it comes from the ABAC
+  // attributes a CEL condition evaluates against.
+  let ns = null, project = null, component = null, subResource = null, environment = null;
+  if (!isCluster) {
+    const t = actor.id === 'nimal@openchoreo.dev' ? TENANCY[1]
+      : actor.id === 'arun@openchoreo.dev' ? TENANCY[0] : pick(TENANCY);
+    ns = t.namespace;
+    const p = pick(t.projects);
+    if (RESOURCE_GROUPS[0].types.includes(type) || type === 'secret' || type === 'secretreference') {
+      project = p.name;
+      if (p.components.length && chance(0.8)) component = pick(p.components);
+    } else if (chance(0.3)) project = p.name;
+    // exec and generate are addressed on a component, so one must be in scope
+    // for the request line to name a real route.
+    if ((verb === 'exec' || verb === 'generate') && p.components.length) component = pick(p.components);
+    if (component && chance(0.25)) subResource = pick(['endpoint-http', 'endpoint-grpc', 'volume-data']);
+    // Only the environment-scoped operations supply one.
+    if (['releasebinding', 'projectreleasebinding', 'resourcereleasebinding'].includes(type) || verb === 'exec') {
+      environment = envScoped(ns, chance(0.5) ? 'development' : pick(ENVIRONMENTS));
+    }
+  }
+
+  const nameFor = () => {
+    if (component) return component;
+    if (type.includes('release')) return `${(project || 'app')}-rel-${1 + Math.floor(rnd() * 40)}`;
+    if (type === 'project') return project || pick(ALL_PROJECTS);
+    if (type === 'environment') return pick(ENVIRONMENTS);
+    if (type === 'namespace') return ns || 'payments';
+    if (category === 'authorization') return pick(['project-developer', 'release-approver', 'observability-reader', 'security-admin', 'ci-deployer']);
+    if (type.startsWith('cluster')) return pick(['default', 'service', 'web-app', 'scheduled-task', 'ci-build']);
+    if (type === 'secret' || type === 'gitsecret' || type === 'secretreference') return pick(['github-token', 'db-credentials', 'stripe-key', 'registry-pull']);
+    return `${type}-${pick(['default', 'primary', 'shared', 'edge'])}`;
+  };
+  const name = nameFor();
+
+  let result = 'success';
+  const groups = Object.values(actor.ents || {}).flat();
+  const overreach = (isCluster || category === 'authorization') && groups.includes('developer');
+  if (overreach) result = chance(0.75) ? 'denied' : 'success';
+  else if (chance(0.055)) result = 'denied';
+  else if (chance(0.06)) result = 'failure';
+
+  return {
+    event_id: uuid7(ts.getTime()),
+    event_time: ts,
+    actor, surface, action, category, result,
+    operation_id: operationID,
+    session_id: sessionFor(actor),
+    // An MCP tools/call has no request line of its own, so http is absent
+    // there. Presence is deliberately not derivable from surface — an MCP
+    // rejection at the HTTP boundary does carry one.
+    http: surface === 'mcp' ? null : httpFor(verb, type, isCluster, ns, project, component, name),
+    resource: {
+      type, namespace: ns, environment, project, component, resource: subResource, name,
+      // uid is server-generated, so an operation that returned no object has none.
+      uid: (verb === 'create' && result !== 'success') ? null : 'uid-' + uuid7(ts.getTime()).slice(0, 8),
+    },
+    request_id: uuid7(ts.getTime()),
+    source_ip: surface === 'mcp' && chance(0.5) ? null : ipAddr(),
+    user_agent: userAgentFor(actor, surface),
+    producer: 'openchoreo-api',
+  };
+}
+
+/* http.path is the CONCRETE request path — HTTPInfoFromRequest records
+   r.URL.Path, decoded, so it agrees with r.PathValue. It is not the route
+   template, so real names appear in it.
+
+   Route shape follows openchoreo-api.yaml, which is flat: collections hang
+   directly off the namespace and are NOT nested under project or component.
+   Pluralisation is the kind plus "s" (authzroles, componentreleases,
+   observabilityalertsnotificationchannels). */
+function httpFor(verb, type, isCluster, ns, project, component, name) {
+  const method = verb === 'create' ? 'POST' : verb === 'update' ? 'PUT' : verb === 'delete' ? 'DELETE' : 'POST';
+  const base = isCluster ? '/api/v1' : '/api/v1/namespaces/' + ns;
+  if (verb === 'exec') return { method: 'POST', path: base + '/components/' + (component || name) + '/exec' };
+  if (verb === 'generate') return { method: 'POST', path: base + '/components/' + (component || name) + '/generate' };
+  let p = base + '/' + type + 's';
+  if (verb !== 'create') p += '/' + name;
+  return { method, path: p };
+}
+
+/* observer is the second producer. Its whole audited surface is one
+   operation, so these are few and deliberately so. */
+function observerEvent(when) {
+  const ts = new Date(when);
+  const actor = pick([ACTORS[0], ACTORS[1], ACTORS[4], ACTORS[2]]);
+  const t = pick(TENANCY);
+  const p = pick(t.projects);
+  const component = p.components.length ? pick(p.components) : null;
+  const groups = Object.values(actor.ents || {}).flat();
+  let result = 'success';
+  if (groups.includes('developer') && chance(0.4)) result = 'denied';
+  else if (chance(0.08)) result = 'failure';
+  const id = 'inc-' + (1000 + Math.floor(rnd() * 900));
+  return {
+    event_id: uuid7(ts.getTime()), event_time: ts,
+    actor, surface: 'rest',
+    action: 'update_incident', category: 'management', result,
+    operation_id: 'UpdateIncident',
+    session_id: sessionFor(actor),
+    http: { method: 'PUT', path: '/api/v1alpha1/incidents/' + id },
+    // uid equals name where the only identifier is a generated one: omitting
+    // it would publish the value as "name" on a denial and as "uid" on success.
+    resource: { type: 'incident', namespace: t.namespace, environment: null, project: p.name, component, resource: null, name: id, uid: id },
+    request_id: uuid7(ts.getTime()), source_ip: ipAddr(),
+    user_agent: userAgentFor(actor, 'rest'),
+    producer: 'observer',
+  };
+}
+
+function unauthEvent(when) {
+  const ts = new Date(when);
+  const surface = chance(0.3) ? 'mcp' : 'rest';
+  return {
+    event_id: uuid7(ts.getTime()), event_time: ts,
+    actor: ANON_ACTOR, surface,
+    action: null, category: null, operation_id: null,
+    session_id: null,
+    // A rejection resolves no operation but did arrive with a request line,
+    // so http is present exactly where operation_id is not — on /mcp too.
+    http: surface === 'mcp'
+      ? { method: 'POST', path: '/mcp' }
+      : { method: pick(['POST', 'PUT', 'DELETE']), path: pick(['/api/v1/namespaces/default/projects', '/api/v1/namespaces/default/components/snip-api-service', '/api/v1/namespaces']) },
+    result: 'unauthenticated',
+    resource: { type: null, namespace: null, environment: null, project: null, component: null, resource: null, name: null, uid: null },
+    request_id: uuid7(ts.getTime()),
+    source_ip: surface === 'mcp' && chance(0.5) ? null : ipAddr(),
+    // A rejected caller still sent a header, and a misconfigured client is
+    // exactly what this field identifies. Some send none at all.
+    user_agent: chance(0.15) ? null : pick(USER_AGENTS[surface]),
+    producer: chance(0.2) ? 'observer' : 'openchoreo-api',
+  };
+}
+
+function buildEvents() {
+  const out = [];
+  const span = 30 * DAY;
+  for (let i = 0; i < 460; i++) {
+    const t = NOW.getTime() - Math.pow(rnd(), 2.1) * span;
+    const d = new Date(t);
+    const hour = d.getHours();
+    if ((hour < 8 || hour > 20) && chance(0.72)) continue;
+    if ((d.getDay() === 0 || d.getDay() === 6) && chance(0.7)) continue;
+    out.push(newEvent(t));
+  }
+  for (let i = 0; i < 26; i++) out.push(unauthEvent(NOW.getTime() - Math.pow(rnd(), 3) * span));
+  const burst = NOW.getTime() - 1.15 * DAY;
+  for (let i = 0; i < 14; i++) out.push(unauthEvent(burst + i * 47000));
+
+  for (let i = 0; i < 22; i++) out.push(observerEvent(NOW.getTime() - Math.pow(rnd(), 2) * span));
+
+  out.sort((a, b) => b.event_time - a.event_time);
+  return out;
+}
+
+const EVENTS = buildEvents();
+
+/* ==================================================================
+   Attribute registry — the searchable surface. Every entry is a
+   first-class field on the event, not a substring of a message.
+   ================================================================== */
+
+/* ------------------------------------------------------------------
+   The filter vocabulary IS the event's field paths.
+
+   Nothing here is hand-listed. Paths are discovered by walking published
+   events, so a field added to audit.Event becomes a filter key the moment
+   an event carries it — no registry to update and, more to the point, no
+   renaming layer to get wrong. The earlier draft called `service`
+   "producer" and `resource.name` "resource_name", which is precisely the
+   kind of drift this removes.
+
+   Dynamic subtrees come along for free: actor.entitlements is
+   map[string][]string, so `actor.entitlements.groups` is discovered from
+   the data, and metadata.* / resource.metadata.* will appear on their own
+   the day anything writes them.
+   ------------------------------------------------------------------ */
+
+const FIELD_ANNOTATIONS = {
+  'event_id':      'this event’s own UUID v7',
+  'actor.type':    'subject type, from the auth.subjects config',
+  'actor.id':      'the token’s validated sub claim',
+  'action':        'semantic action name policy is written against — 1:1 with operation_id today',
+  'category':      'policy grouping — empty when no operation resolved',
+  'surface':       'which surface of the API the call arrived through — rest or mcp',
+  'operation_id':  'canonical operation identifier — 1:1 with action today, but omitted where action is ""',
+  'resource.type':      'kind of thing that was changed',
+  'resource.namespace': 'Hierarchy.Namespace, or Resource.Namespace when set',
+  'resource.project':   'Hierarchy.Project — where the decision was authorized',
+  'resource.component': 'Hierarchy.Component',
+  'resource.resource':  'Hierarchy.Resource — fourth level, below component',
+  'resource.uid':       'server-generated id, never reused; absent when the operation returned no object',
+  'resource.environment': 'namespace-qualified environment, from the ABAC attributes',
+  'resource.name':      'name the handler recorded',
+  'result':        'outcome of the call',
+  'request_id':    'correlation ID shared with the access log',
+  'source_ip':     'client address — empty for a direct MCP client',
+  'user_agent':    'the client that sent the request, as it identified itself',
+  'producer':      'the service that emitted this event',
+  'schema_version': 'record schema this event was published under',
+  'actor.issuer':  'the token’s iss claim — the namespace that makes actor.id unique',
+  'actor.session_id': 'the token’s sid claim, joining this event to an IdP login',
+  'http.method':   'request method, absent for an MCP tools/call',
+  'http.path':     'the concrete request path — not the route template; absent for an MCP tools/call',
+};
+
+/* Values a field is known to take, for the grouped pick list. Only where the
+   grouping carries meaning the data cannot show on its own. */
+const FIELD_GROUPS = {
+  'resource.type': () => RESOURCE_GROUPS.map(g => ({ label: g.group, values: g.types })),
+};
+
+// One published shape per event, cached — every filter reads through this, so
+// the UI can never disagree with what the emitter would publish.
+function wireOf(e) { return e._wire || (e._wire = wireShape(e)); }
+
+function walkPaths(obj, prefix, out) {
+  if (obj === null || obj === undefined) return out;
+  for (const [k, v] of Object.entries(obj)) {
+    const path = prefix ? prefix + '.' + k : k;
+    if (v !== null && typeof v === 'object' && !Array.isArray(v)) { walkPaths(v, path, out); continue; }
+    // A null branch is not a leaf. `resource` is null on an event that has no
+    // resource, and recording it as a path would offer a filter whose values
+    // are object references from the events that DO populate it.
+    if (v === null || v === undefined) continue;
+    out.add(path);
+  }
+  return out;
+}
+
+// timestamp is owned by the time-range control, so it is not a text filter.
+const EXCLUDED_PATHS = new Set(['event_time']);
+
+const FIELD_PATHS = (() => {
+  const s = new Set();
+  for (const e of EVENTS) walkPaths(wireOf(e), '', s);
+  for (const p of EXCLUDED_PATHS) s.delete(p);
+  return [...s].sort();
+})();
+
+// Distinct values per path, for suggestions. Built once from every event.
+const FIELD_VALUES = (() => {
+  const m = new Map(FIELD_PATHS.map(p => [p, new Set()]));
+  for (const e of EVENTS) {
+    for (const p of FIELD_PATHS) {
+      const v = valueAt(e, p);
+      if (v === null || v === undefined) continue;
+      if (Array.isArray(v)) { for (const one of v) m.get(p).add(one); continue; }
+      if (typeof v === 'object') continue; // never offer an object as a value
+      m.get(p).add(v);
+    }
+  }
+  return new Map([...m].map(([p, set]) => [p, [...set].sort()]));
+})();
+
+function valueAt(e, path) {
+  let cur = wireOf(e);
+  for (const seg of path.split('.')) {
+    if (cur === null || cur === undefined) return null;
+    cur = cur[seg];
+  }
+  return cur;
+}
+
+/* Typing the last segment is enough when it is unambiguous: `project:`
+   resolves to `resource.project`. The token always displays the canonical
+   path, so the shorthand is an input convenience and never a second name
+   for the field. */
+const PATH_ALIASES = (() => {
+  const bySeg = new Map();
+  for (const p of FIELD_PATHS) {
+    const seg = p.split('.').pop();
+    if (!bySeg.has(seg)) bySeg.set(seg, []);
+    bySeg.get(seg).push(p);
+  }
+  const out = new Map();
+  for (const [seg, paths] of bySeg) if (paths.length === 1 && paths[0] !== seg) out.set(seg, paths[0]);
+  return out;
+})();
+
+function resolvePath(key) {
+  const k = key.trim().toLowerCase();
+  if (FIELD_VALUES.has(k)) return k;
+  return PATH_ALIASES.get(k) || null;
+}
+
+
+const RANGES = [
+  { id: '1h',  label: 'Last 1 hour',   ms: 3600e3 },
+  { id: '24h', label: 'Last 24 hours', ms: DAY },
+  { id: '7d',  label: 'Last 7 days',   ms: 7 * DAY },
+  { id: '14d', label: 'Last 14 days',  ms: 14 * DAY },
+  { id: '30d', label: 'Last 30 days',  ms: 30 * DAY },
+];
+
+/* Columns name the field path they render, so the table header and the filter
+   vocabulary stay the same words. The three composite columns render two
+   fields each and say so. */
+const COLUMNS = [
+  { id: 'time',      label: 'Time',         field: 'event_time', fixed: true },
+  { id: 'actor',     label: 'Actor',        field: 'actor.id + actor.type', fixed: true },
+  { id: 'action',    label: 'Action',       field: 'action', fixed: true },
+  { id: 'resource',  label: 'Resource',     field: 'resource.name + resource.type', fixed: true },
+  { id: 'scope',     label: 'Scope',        field: 'resource.namespace / project / component / resource', on: true },
+  { id: 'result',    label: 'Result',       field: 'result', fixed: true },
+  { id: 'surface',    label: 'Surface',       field: 'surface', on: true },
+  { id: 'category',  label: 'Category',     field: 'category' },
+  { id: 'operation', label: 'Operation ID', field: 'operation_id' },
+  { id: 'environment', label: 'Environment', field: 'resource.environment' },
+  { id: 'producer',  label: 'Producer',     field: 'producer' },
+  { id: 'request',   label: 'Request ID',   field: 'request_id' },
+  { id: 'ip',        label: 'Source IP',    field: 'source_ip' },
+  { id: 'ua',        label: 'Client',       field: 'user_agent', on: true },
+  { id: 'http',      label: 'Request line', field: 'http.method + http.path' },
+];
+
+/* Query state. `tokens` is an ordered list of {attr, value}; attr null means
+   a free-text contains-match. Same attribute ORs, different attributes AND. */
+const S = {
+  tokens: [{ attr: 'result', value: 'denied', op: 'eq' }],
+  draft: '',
+  range: '7d',
+  zoom: null,
+  columns: new Set(COLUMNS.filter(c => c.fixed || c.on).map(c => c.id)),
+  sort: 'desc',
+  isLive: false,
+  /* Only meaningful in the chart-enabled build; #nochart hides the chart there
+     while leaving the toggle available. */
+  showChart: CHART_ENABLED && !/(^|[#&])nochart\b/.test(location.hash),
+  page: 1,
+  selected: null,
+  loadedAt: new Date(NOW.getTime() - 41000),
+  popOpen: null,   // 'q' | 'range' | 'columns'
+  hot: 0,          // highlighted suggestion index
+};
+const PAGE = 30;
+
+function activeWindow() {
+  if (S.zoom) return S.zoom;
+  const r = RANGES.find(r => r.id === S.range);
+  return { from: new Date(CLOCK.getTime() - r.ms), to: CLOCK };
+}
+
+/* A token is {attr, value, op}: attr is a field path (null for free text),
+   op is 'eq' for a value picked off the list or 'has' for a typed substring.
+
+   The operator defaults to 'eq' and is normalised on read rather than trusted
+   on the object, so a token built without one still matches itself and stays
+   removable — a missing op previously made the seed filter's × a no-op. */
+const opOf = t => t.op || 'eq';
+
+function tokenMatches(e, tk) {
+  if (tk.attr === null) {
+    // Free text sweeps every discovered leaf, so it widens automatically too.
+    const hay = FIELD_PATHS.map(p => valueAt(e, p))
+      .flatMap(v => Array.isArray(v) ? v : [v])
+      .filter(v => v !== null && v !== undefined && v !== '')
+      .join(' ').toLowerCase();
+    return hay.includes(tk.value.toLowerCase());
+  }
+  const v = valueAt(e, tk.attr);
+  if (v === null || v === undefined) return false;
+  const vals = Array.isArray(v) ? v : [v];
+  if (opOf(tk) === 'has') return vals.some(one => String(one).toLowerCase().includes(tk.value.toLowerCase()));
+  return vals.some(one => String(one) === tk.value);
+}
+
+/* skipAttr lets a suggestion list count "what would I get if I picked this",
+   which is the only thing that makes the counts worth showing. */
+function matches(e, skipAttr) {
+  const w = activeWindow();
+  if (e.event_time < w.from || e.event_time > w.to) return false;
+  const groups = new Map();
+  for (const tk of S.tokens) {
+    if (skipAttr !== undefined && tk.attr === skipAttr) continue;
+    const k = tk.attr === null ? '__free__' : tk.attr;
+    if (!groups.has(k)) groups.set(k, []);
+    groups.get(k).push(tk);
+  }
+  for (const [k, list] of groups) {
+    if (k === '__free__') { if (!list.every(tk => tokenMatches(e, tk))) return false; }
+    else if (!list.some(tk => tokenMatches(e, tk))) return false;
+  }
+  return true;
+}
+function filtered(skipAttr) { return EVENTS.filter(e => matches(e, skipAttr)); }
+
+function hasToken(attr, value, op) {
+  return S.tokens.some(t => t.attr === attr && t.value === value && opOf(t) === (op || 'eq'));
+}
+function addToken(attr, value, op) {
+  op = op || 'eq';
+  if (hasToken(attr, value, op)) return;
+  S.tokens.push({ attr, value, op });
+  S.page = 1;
+}
+function removeToken(attr, value, op) {
+  op = op || 'eq';
+  S.tokens = S.tokens.filter(t => !(t.attr === attr && t.value === value && opOf(t) === op));
+  S.page = 1;
+}
+function toggleToken(attr, value, op) { hasToken(attr, value, op) ? removeToken(attr, value, op) : addToken(attr, value, op); }
+function clearAttr(attr) { S.tokens = S.tokens.filter(t => t.attr !== attr); S.page = 1; }
+
+/* ==================================================================
+   DOM helpers
+   ================================================================== */
+
+function el(tag, attrs, ...kids) {
+  const n = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs || {})) {
+    if (v === null || v === undefined || v === false) continue;
+    if (k === 'class') n.className = v;
+    else if (k === 'html') n.innerHTML = v;
+    else if (k === 'text') n.textContent = v;
+    else if (k.startsWith('on')) n.addEventListener(k.slice(2), v);
+    else n.setAttribute(k, v === true ? '' : v);
+  }
+  for (const kid of kids.flat()) {
+    if (kid === null || kid === undefined || kid === false) continue;
+    n.appendChild(typeof kid === 'string' ? document.createTextNode(kid) : kid);
+  }
+  return n;
+}
+const svgNS = 'http://www.w3.org/2000/svg';
+function sEl(tag, attrs, ...kids) {
+  const n = document.createElementNS(svgNS, tag);
+  for (const [k, v] of Object.entries(attrs || {})) {
+    if (v === null || v === undefined || v === false) continue;
+    if (k.startsWith('on')) n.addEventListener(k.slice(2), v); else n.setAttribute(k, v);
+  }
+  for (const kid of kids.flat()) { if (kid) n.appendChild(typeof kid === 'string' ? document.createTextNode(kid) : kid); }
+  return n;
+}
+const caret = () => el('span', { class: 'caret', html: '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 9 7 7 7-7"/></svg>' });
+const xIcon = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+const tickIcon = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg>';
+
+function esc(s) { return String(s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c])); }
+function markMatch(text, q) {
+  if (!q) return esc(text);
+  const i = text.toLowerCase().indexOf(q.toLowerCase());
+  if (i < 0) return esc(text);
+  return esc(text.slice(0, i)) + '<em>' + esc(text.slice(i, i + q.length)) + '</em>' + esc(text.slice(i + q.length));
+}
+function countBy(events, fn) {
+  const m = new Map();
+  for (const e of events) {
+    const k = fn(e);
+    if (k === null || k === undefined) continue;
+    // A list-valued field (entitlements) counts against each of its values.
+    if (Array.isArray(k)) { for (const one of k) m.set(one, (m.get(one) || 0) + 1); continue; }
+    m.set(k, (m.get(k) || 0) + 1);
+  }
+  return m;
+}
+
+document.addEventListener('click', ev => {
+  if (!S.popOpen) return;
+  const host = document.getElementById(S.popOpen === 'q' ? 'q-field' : S.popOpen === 'range' ? 'range-field' : 'columns-field');
+  if (host && !host.contains(ev.target)) { S.popOpen = null; render(); }
+});
+document.addEventListener('keydown', ev => {
+  if (ev.key !== 'Escape') return;
+  if (S.popOpen) { S.popOpen = null; render(); return; }
+  if (S.selected) { S.selected = null; render(); }
+});
+
+/* ==================================================================
+   Query bar
+   ================================================================== */
+
+/* Parse the draft into {attr, valueQuery}. Typing "actor:ar" moves straight
+   into that attribute's values, so the whole thing works from the keyboard. */
+function parseDraft() {
+  const i = S.draft.indexOf(':');
+  if (i < 0) return { attr: null, q: S.draft.trim() };
+  const attr = resolvePath(S.draft.slice(0, i));
+  if (!attr) return { attr: null, q: S.draft.trim() };
+  return { attr, q: S.draft.slice(i + 1).trim() };
+}
+
+const MAX_SUGGESTED_VALUES = 120;
+
+function suggestions() {
+  const { attr, q } = parseDraft();
+
+  if (!attr) {
+    const ql = q.toLowerCase();
+    const rows = FIELD_PATHS
+      .filter(p => !ql || p.toLowerCase().includes(ql) || (FIELD_ANNOTATIONS[p] || '').toLowerCase().includes(ql))
+      .map(p => ({ kind: 'attr', key: p, desc: FIELD_ANNOTATIONS[p] || '' }));
+    if (q) rows.unshift({ kind: 'free', key: q, desc: 'match this text anywhere in the event' });
+    return { attr: null, q, rows };
+  }
+
+  const base = filtered(attr);
+  const counts = countBy(base, e => valueAt(e, attr));
+  const known = FIELD_VALUES.get(attr) || [];
+  const ql = q.toLowerCase();
+  const wanted = v => !ql || String(v).toLowerCase().includes(ql);
+  const rows = [];
+
+  // A typed value that is not itself a known value is offered as a substring
+  // match, so high-cardinality fields (request_id, event_id) stay usable
+  // without needing a curated value list.
+  if (q && !known.some(v => String(v) === q)) {
+    rows.push({ kind: 'value', key: q, op: 'has', desc: 'contains this text', on: hasToken(attr, q, 'has') });
+  }
+
+  const groups = FIELD_GROUPS[attr] ? FIELD_GROUPS[attr]() : null;
+  if (groups) {
+    const seen = new Set();
+    for (const g of groups) {
+      const hits = g.values.filter(v => known.includes(v) && wanted(v));
+      if (!hits.length) continue;
+      rows.push({ kind: 'group', key: g.label });
+      for (const v of hits) { seen.add(v); rows.push({ kind: 'value', key: v, op: 'eq', n: counts.get(v) || 0, on: hasToken(attr, v) }); }
+    }
+    const rest = known.filter(v => !seen.has(v) && wanted(v));
+    if (rest.length) {
+      rows.push({ kind: 'group', key: 'Other' });
+      for (const v of rest) rows.push({ kind: 'value', key: v, op: 'eq', n: counts.get(v) || 0, on: hasToken(attr, v) });
+    }
+  } else {
+    for (const v of known.filter(wanted).slice(0, MAX_SUGGESTED_VALUES)) {
+      // An empty string is a real value here — action and category carry ""
+      // when nothing resolved — so it is offered, labelled rather than blank.
+      rows.push({ kind: 'value', key: v, op: 'eq', label: v === '' ? '(empty)' : v, n: counts.get(v) || 0, on: hasToken(attr, v) });
+    }
+    const total = known.filter(wanted).length;
+    if (total > MAX_SUGGESTED_VALUES) {
+      rows.push({ kind: 'hint', key: '', desc: `${total - MAX_SUGGESTED_VALUES} more values — keep typing to narrow.` });
+    }
+  }
+  if (!rows.length) rows.push({ kind: 'hint', key: '', desc: 'No event in this window carries a value for this field.' });
+  return { attr, q, rows };
+}
+
+function commitRow(row, attr) {
+  if (row.kind === 'attr') { S.draft = row.key + ':'; S.hot = 0; renderQueryBar(); focusQ(); return; }
+  if (row.kind === 'free') { addToken(null, row.key, 'has'); S.draft = ''; S.hot = 0; render(); focusQ(); return; }
+  if (row.kind === 'value') { toggleToken(attr, row.key, row.op || 'eq'); S.draft = ''; S.hot = 0; render(); focusQ(); return; }
+}
+
+function focusQ() {
+  const i = document.getElementById('q-input');
+  if (i) i.focus();
+}
+
+function renderQueryBar() {
+  const host = document.getElementById('q-field');
+
+  // The bar rebuilds on every keystroke, so carry focus and caret across
+  // the rebuild or typing collapses after the first character.
+  const prev = document.getElementById('q-input');
+  const hadFocus = prev && document.activeElement === prev;
+  const caretAt = hadFocus ? prev.selectionStart : null;
+
+  host.replaceChildren();
+
+  const box = el('div', { class: 'qbox' + (S.popOpen === 'q' ? ' focus' : '') });
+  box.append(el('span', { class: 'q-icon', html: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>' }));
+
+  for (const tk of S.tokens) {
+    const shownVal = tk.value === '' ? '(empty)' : tk.value;
+    box.append(el('span', { class: 'token' + (tk.attr === null ? ' free' : '') },
+      el('span', { class: 't-attr', text: tk.attr === null ? 'any field' : tk.attr }),
+      el('span', { class: 't-op', text: opOf(tk) === 'has' ? '~' : '=' }),
+      el('span', { class: 't-val', text: shownVal, title: shownVal }),
+      el('button', {
+        class: 't-x', type: 'button', 'aria-label': `Remove filter ${tk.attr || 'any field'} ${shownVal}`,
+        html: xIcon,
+        onclick: ev => { ev.stopPropagation(); removeToken(tk.attr, tk.value, opOf(tk)); render(); },
+      }),
+    ));
+  }
+
+  const input = el('input', {
+    id: 'q-input', type: 'text', value: S.draft, autocomplete: 'off', spellcheck: 'false',
+    placeholder: S.tokens.length ? 'Add a filter…' : 'Filter by actor:, action:, result:, project:… or just type',
+    'aria-label': 'Filter audit events',
+    oninput: e => { S.draft = e.target.value; S.hot = 0; S.popOpen = 'q'; renderQueryBar(); },
+    onfocus: () => { if (S.popOpen !== 'q') { S.popOpen = 'q'; renderQueryBar(); } },
+    onkeydown: e => {
+      const sug = suggestions();
+      const pickable = sug.rows.filter(r => r.kind !== 'group' && r.kind !== 'hint');
+      if (e.key === 'ArrowDown') { e.preventDefault(); S.hot = Math.min(S.hot + 1, Math.max(0, pickable.length - 1)); renderQueryBar(); }
+      else if (e.key === 'ArrowUp') { e.preventDefault(); S.hot = Math.max(S.hot - 1, 0); renderQueryBar(); }
+      else if (e.key === 'Enter') {
+        e.preventDefault();
+        if (pickable[S.hot]) commitRow(pickable[S.hot], sug.attr);
+      } else if (e.key === 'Backspace' && S.draft === '' && S.tokens.length) {
+        const last = S.tokens[S.tokens.length - 1];
+        removeToken(last.attr, last.value); render();
+      }
+    },
+  });
+  box.append(input);
+  if (S.tokens.length) {
+    box.append(el('button', {
+      class: 'btn link tiny', type: 'button', text: 'Clear',
+      onclick: ev => { ev.stopPropagation(); S.tokens = []; S.draft = ''; S.page = 1; render(); },
+    }));
+  }
+  box.addEventListener('click', () => { S.popOpen = 'q'; renderQueryBar(); focusQ(); });
+
+  host.append(el('span', { class: 'field-label', text: 'Filter' }), box);
+
+  // Suggestions
+  const pop = el('div', { class: 'pop' + (S.popOpen === 'q' ? ' open' : '') });
+  const sug = suggestions();
+  if (sug.attr) {
+    pop.append(el('div', { class: 'pop-head' },
+      el('span', { class: 'ph-attr', text: sug.attr + ':' }),
+      el('span', { class: 'ph-desc', text: FIELD_ANNOTATIONS[sug.attr] || 'field on the published event' }),
+      el('button', { class: 'btn link tiny', type: 'button', text: 'Back', onclick: () => { S.draft = ''; S.hot = 0; renderQueryBar(); focusQ(); } }),
+    ));
+  }
+  const list = el('div', { class: 'pop-list' });
+  let pi = -1;
+  for (const row of sug.rows) {
+    if (row.kind === 'group') { list.append(el('div', { class: 'pop-group', text: row.key })); continue; }
+    if (row.kind === 'hint') { list.append(el('div', { class: 'pop-empty', text: row.desc })); continue; }
+    pi++;
+    const idx = pi;
+    const r = el('div', {
+      class: 'sg' + (idx === S.hot ? ' hot' : ''), role: 'option',
+      onmouseenter: () => { if (S.hot !== idx) { S.hot = idx; renderQueryBar(); } },
+      onclick: () => commitRow(row, sug.attr),
+    },
+      el('span', { class: 'sg-key', html: row.kind === 'attr' ? markMatch(row.key, sug.q) + ':' : markMatch(row.label !== undefined ? row.label : row.key, sug.q) }),
+      row.desc ? el('span', { class: 'sg-desc', text: row.desc }) : el('span', { class: 'sg-desc' }),
+      row.on ? el('span', { class: 'sg-on', html: tickIcon }) : null,
+      row.n !== null && row.n !== undefined ? el('span', { class: 'sg-n', text: String(row.n) }) : null,
+    );
+    list.append(r);
+  }
+  if (pi < 0) list.append(el('div', { class: 'pop-empty', text: `Nothing matches “${sug.q}”.` }));
+  pop.append(list);
+
+  if (sug.attr === 'surface') {
+    pop.append(el('div', { class: 'pop-note', text: 'MCP wraps the REST API and emits from the same operation table, so action, category and operation_id do not change with the surface — only this field does. Note 80 of the 114 operations have an MCP tool binding, so combining surface:mcp with an unbound action returns nothing.' }));
+  } else if (sug.attr === 'action' || sug.attr === 'category') {
+    pop.append(el('div', { class: 'pop-note', text: 'An authentication rejection resolves no operation, so it publishes this field as an empty string rather than omitting it — pick (empty) to find those, or use result:unauthenticated.' }));
+  } else if (sug.attr === 'operation_id' || sug.attr === 'resource.type') {
+    pop.append(el('div', { class: 'pop-note', text: 'Omitted entirely on an authentication rejection, so filtering here excludes those events. Reach them with result:unauthenticated.' }));
+  } else if (!sug.attr) {
+    pop.append(el('div', { class: 'pop-note', text: 'These are the event’s own field paths — what you filter on is what the emitter publishes. Typing the last segment is enough when it is unambiguous: project: resolves to resource.project.' }));
+  }
+  host.append(pop);
+
+  if (hadFocus) {
+    input.focus();
+    const at = Math.min(caretAt ?? S.draft.length, S.draft.length);
+    try { input.setSelectionRange(at, at); } catch { /* not all input types support it */ }
+  }
+
+  /* Hint line under the bar. It only explains how multiple filters combine —
+     the field list it used to carry is what the suggestions are for. */
+  const hint = document.getElementById('q-hint');
+  hint.replaceChildren();
+  if (S.tokens.length > 1) {
+    const byAttr = new Map();
+    for (const t of S.tokens) byAttr.set(t.attr, (byAttr.get(t.attr) || 0) + 1);
+    const ors = [...byAttr].filter(([, n]) => n > 1).map(([k]) => k || 'contains');
+    hint.append(document.createTextNode(
+      ors.length
+        ? `Reading as: ${ors.map(k => `any of the ${k} values`).join(', ')}, and every other filter must also match.`
+        : 'Reading as: all filters must match.'));
+  }
+}
+
+function renderRangeField() {
+  const host = document.getElementById('range-field');
+  host.replaceChildren();
+  const btn = el('button', {
+    class: 'field-control', type: 'button', 'aria-expanded': S.popOpen === 'range' ? 'true' : 'false', 'aria-haspopup': 'true',
+    onclick: ev => { ev.stopPropagation(); S.popOpen = S.popOpen === 'range' ? null : 'range'; render(); },
+  },
+    el('span', { class: 'field-value', text: S.zoom ? 'Zoomed selection' : RANGES.find(r => r.id === S.range).label }),
+    caret(),
+  );
+  const pop = el('div', { class: 'pop' + (S.popOpen === 'range' ? ' open' : '') });
+  const list = el('div', { class: 'pop-list' });
+  for (const r of RANGES) {
+    list.append(el('div', { class: 'opt', onclick: () => { S.range = r.id; S.zoom = null; S.page = 1; S.popOpen = null; render(); } },
+      el('input', { type: 'radio', name: 'range', checked: !S.zoom && S.range === r.id, tabindex: '-1' }),
+      el('span', { class: 'opt-label', text: r.label }),
+    ));
+  }
+  pop.append(list, el('div', { class: 'pop-note', text: 'Retention is set in the observability module or your own audit system, not here — this window only asks for what that store still holds.' }));
+  host.append(el('span', { class: 'field-label', text: 'Time range' }), btn, pop);
+}
+
+function renderColumnsField() {
+  const host = document.getElementById('columns-field');
+  host.replaceChildren();
+  const btn = el('button', {
+    class: 'field-control', type: 'button', 'aria-expanded': S.popOpen === 'columns' ? 'true' : 'false', 'aria-haspopup': 'true',
+    onclick: ev => { ev.stopPropagation(); S.popOpen = S.popOpen === 'columns' ? null : 'columns'; render(); },
+  },
+    el('span', { class: 'field-value', text: `${S.columns.size} of ${COLUMNS.length} columns` }),
+    caret(),
+  );
+  const pop = el('div', { class: 'pop' + (S.popOpen === 'columns' ? ' open' : '') });
+  const list = el('div', { class: 'pop-list' });
+  for (const c of COLUMNS) {
+    list.append(el('div', {
+      class: 'opt' + (c.fixed ? ' disabled' : ''),
+      onclick: c.fixed ? null : () => { S.columns.has(c.id) ? S.columns.delete(c.id) : S.columns.add(c.id); render(); },
+    },
+      el('input', { type: 'checkbox', checked: S.columns.has(c.id), disabled: c.fixed, tabindex: '-1' }),
+      el('span', { class: 'opt-label' }, c.label, el('span', { class: 'opt-field', text: c.field })),
+    ));
+  }
+  pop.append(list, el('div', { class: 'pop-note', text: 'Time, actor, action, resource and result always stay — an audit row without them is not a record of anything.' }));
+  host.append(el('span', { class: 'field-label', text: 'Columns' }), btn, pop);
+}
+
+/* ==================================================================
+   Lenses
+   ================================================================== */
+
+function renderLenses() {
+  const box = document.getElementById('lenses');
+  box.replaceChildren();
+
+  /* Counted over everything EXCEPT the result filter — the same faceted basis
+     the suggestion lists use. Counting over the already-filtered rows made the
+     tiles self-defeating: pick Denied and Failed/Unauthenticated both read 0,
+     as though there were none to find. */
+  const base = filtered('result');
+  const byResult = countBy(base, e => e.result);
+  const actors = new Set(base.map(e => e.actor.id)).size;
+  const rows = base;
+
+  const lens = (label, value, note, color, apply, pressed, quiet) =>
+    el('button', { class: 'lens' + (quiet ? ' is-quiet' : ''), type: 'button', 'aria-pressed': pressed ? 'true' : 'false', onclick: apply },
+      el('span', { class: 'lens-k' }, color ? el('span', { class: 'lens-dot', style: `background:${color}` }) : null, label),
+      el('span', { class: 'lens-v', text: value }),
+      el('span', { class: 'lens-n', text: note }),
+    );
+
+  const only = id => () => {
+    const already = S.tokens.filter(t => t.attr === 'result').length === 1 && hasToken('result', id);
+    clearAttr('result');
+    if (!already) addToken('result', id);
+    render();
+  };
+  const anyResult = S.tokens.some(t => t.attr === 'result');
+
+  box.append(lens('Events', rows.length.toLocaleString(), 'in the window, all outcomes', null,
+    () => { clearAttr('result'); render(); }, !anyResult));
+  box.append(lens('Denied', (byResult.get('denied') || 0).toLocaleString(), 'refused by policy', RESULT_COLOR.denied,
+    only('denied'), S.tokens.filter(t => t.attr === 'result').length === 1 && hasToken('result', 'denied'), !byResult.get('denied')));
+  box.append(lens('Failed', (byResult.get('failure') || 0).toLocaleString(), 'attempted, errored', RESULT_COLOR.failure,
+    only('failure'), S.tokens.filter(t => t.attr === 'result').length === 1 && hasToken('result', 'failure'), !byResult.get('failure')));
+  box.append(lens('Unauthenticated', (byResult.get('unauthenticated') || 0).toLocaleString(), 'rejected at the boundary', RESULT_COLOR.unauthenticated,
+    only('unauthenticated'), S.tokens.filter(t => t.attr === 'result').length === 1 && hasToken('result', 'unauthenticated'), !byResult.get('unauthenticated')));
+  box.append(el('div', { class: 'lens', style: 'cursor:default' },
+    el('span', { class: 'lens-k', text: 'Distinct actors' }),
+    el('span', { class: 'lens-v', text: String(actors) }),
+    el('span', { class: 'lens-n', text: 'users, accounts and agents' }),
+  ));
+}
+
+/* ==================================================================
+   Timeline
+   ================================================================== */
+
+function niceBucket(spanMs, target) {
+  const MIN = 60e3, HR = 3600e3;
+  const units = [MIN, 5 * MIN, 15 * MIN, 30 * MIN, HR, 2 * HR, 4 * HR, 6 * HR, 12 * HR, DAY, 2 * DAY];
+  const ideal = spanMs / target;
+  return units.find(u => u >= ideal) || 2 * DAY;
+}
+const fmtTime = d => d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+const fmtDay = d => d.toLocaleDateString([], { day: '2-digit', month: 'short' });
+function fmtRange(a, b) {
+  return a.toDateString() === b.toDateString()
+    ? `${fmtDay(a)} ${fmtTime(a)}–${fmtTime(b)}`
+    : `${fmtDay(a)} ${fmtTime(a)} → ${fmtDay(b)} ${fmtTime(b)}`;
+}
+
+function renderChartToggle() {
+  const box = document.getElementById('chart-toggle');
+  box.replaceChildren();
+  box.append(el('button', {
+    class: 'btn link tiny', type: 'button',
+    onclick: () => {
+      S.showChart = !S.showChart;
+      // Keep the URL in step so the current view can be handed to someone.
+      try {
+        const h = S.showChart ? '' : '#nochart';
+        history.replaceState(null, '', location.pathname + location.search + h);
+      } catch { /* sandboxed frame — the toggle still works */ }
+      render();
+    },
+  }, S.showChart ? 'Hide events over time' : 'Show events over time'));
+}
+
+function renderTimeline(rows) {
+  const host = document.getElementById('tl-body');
+  // Chart-less build: the nodes were removed at start-up, so there is nothing
+  // to draw and no toggle to offer.
+  if (!host) return;
+  const tip = document.getElementById('tl-tip');
+
+  renderChartToggle();
+  document.getElementById('tl-head').hidden = !S.showChart;
+  host.hidden = !S.showChart;
+  if (!S.showChart) {
+    // Leave the tooltip node in place; drop the drawn chart so a hidden SVG
+    // is not carrying stale geometry when it comes back.
+    [...host.children].forEach(c => { if (c !== tip) c.remove(); });
+    tip.classList.remove('show');
+    return;
+  }
+  [...host.children].forEach(c => { if (c !== tip) c.remove(); });
+
+  const w = activeWindow();
+  const span = w.to - w.from;
+  const bucket = niceBucket(span, 44);
+  const n = Math.max(1, Math.ceil(span / bucket));
+  const start = w.from.getTime();
+  // Refusals stack on top so they stay visible above a tall success bar.
+  const order = ['success', 'failure', 'denied', 'unauthenticated'];
+
+  const buckets = Array.from({ length: n }, (_, i) => ({
+    from: new Date(start + i * bucket),
+    to: new Date(Math.min(start + (i + 1) * bucket, w.to.getTime())),
+    counts: Object.fromEntries(order.map(k => [k, 0])), total: 0,
+  }));
+  for (const e of rows) {
+    const i = Math.min(n - 1, Math.floor((e.event_time - start) / bucket));
+    if (i < 0) continue;
+    buckets[i].counts[e.result]++; buckets[i].total++;
+  }
+  const max = Math.max(1, ...buckets.map(b => b.total));
+
+  document.getElementById('tl-sub').textContent =
+    `${fmtRange(w.from, w.to)} · ${bucket >= DAY ? (bucket / DAY) + '-day' : bucket >= 3600e3 ? (bucket / 3600e3) + '-hour' : (bucket / 60e3) + '-minute'} buckets`;
+
+  const W = 1000, H = 132, padL = 34, padR = 8, padT = 10, padB = 22;
+  const plotW = W - padL - padR, plotH = H - padT - padB;
+  const bw = plotW / n;
+  const x = i => padL + i * bw;
+  const y = v => padT + plotH - (v / max) * plotH;
+  const g = [];
+
+  for (const frac of [0, 0.5, 1]) {
+    const v = Math.round(max * frac);
+    g.push(sEl('line', { x1: padL, x2: W - padR, y1: y(v), y2: y(v), stroke: 'var(--chart-grid)', 'stroke-width': frac === 0 ? 1 : 0.7, 'stroke-dasharray': frac === 0 ? '' : '3 4' }));
+    g.push(sEl('text', { x: padL - 6, y: y(v) + 3.5, 'text-anchor': 'end', fill: 'var(--chart-label)', 'font-size': '9.5', 'font-family': 'var(--mono)' }, String(v)));
+  }
+
+  buckets.forEach((b, i) => {
+    let acc = 0;
+    const bx = x(i) + bw * 0.14;
+    const bWidth = Math.max(1.2, bw * 0.72);
+    for (const k of order) {
+      const c = b.counts[k];
+      if (!c) continue;
+      g.push(sEl('rect', { x: bx, y: y(acc + c), width: bWidth, height: Math.max(1, (c / max) * plotH), fill: RESULT_COLOR[k], rx: 1 }));
+      acc += c;
+    }
+    const hit = sEl('rect', {
+      x: x(i), y: padT, width: bw, height: plotH, fill: 'transparent', style: 'cursor:zoom-in',
+      'aria-label': `${fmtRange(b.from, b.to)}: ${b.total} events`,
+    });
+    hit.addEventListener('mouseenter', ev => showTip(ev, b));
+    hit.addEventListener('mousemove', ev => showTip(ev, b));
+    hit.addEventListener('mouseleave', () => tip.classList.remove('show'));
+    hit.addEventListener('click', () => { if (S.isLive) setLive(false); S.zoom = { from: b.from, to: b.to }; S.page = 1; tip.classList.remove('show'); render(); });
+    g.push(hit);
+  });
+
+  const labelEvery = Math.max(1, Math.round(n / 7));
+  buckets.forEach((b, i) => {
+    if (i % labelEvery) return;
+    g.push(sEl('text', { x: x(i) + bw / 2, y: H - 7, 'text-anchor': 'middle', fill: 'var(--chart-label)', 'font-size': '9.5', 'font-family': 'var(--mono)' },
+      bucket >= DAY ? fmtDay(b.from) : (span > 2 * DAY ? `${fmtDay(b.from)} ${fmtTime(b.from)}` : fmtTime(b.from))));
+  });
+
+  host.insertBefore(sEl('svg', { viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': 'Audit events over time, stacked by outcome' }, g), tip);
+
+  function showTip(ev, b) {
+    const list = order.filter(k => b.counts[k]).map(k =>
+      el('div', { class: 't-r' },
+        el('span', { class: 't-sw', style: `background:${RESULT_COLOR[k]}` }),
+        RESULTS.find(r => r.id === k).label,
+        el('span', { class: 't-n', text: String(b.counts[k]) }),
+      ));
+    tip.replaceChildren(
+      el('div', { class: 't-h', text: fmtRange(b.from, b.to) }),
+      list.length ? el('div', {}, list) : el('div', { class: 't-r', text: 'No events' }),
+      el('div', { class: 't-h', style: 'margin:5px 0 0;opacity:.6', text: 'Click to zoom' }),
+    );
+    const hostBox = host.getBoundingClientRect();
+    tip.classList.add('show');
+    const tw = tip.offsetWidth;
+    let left = ev.clientX - hostBox.left + 14;
+    if (left + tw > hostBox.width - 4) left = ev.clientX - hostBox.left - tw - 14;
+    tip.style.left = Math.max(4, left) + 'px';
+    tip.style.top = Math.max(4, ev.clientY - hostBox.top - 10) + 'px';
+  }
+
+  const legend = document.getElementById('legend');
+  legend.replaceChildren();
+  for (const r of RESULTS) {
+    legend.append(el('button', {
+      class: 'lg', type: 'button', 'aria-pressed': hasToken('result', r.id) ? 'true' : 'false',
+      onclick: () => { toggleToken('result', r.id); render(); },
+    }, el('span', { class: 'lg-sw', style: `background:${r.color}` }), r.label));
+  }
+  if (S.zoom) legend.append(el('button', { class: 'btn tiny', type: 'button', text: 'Reset zoom', onclick: () => { S.zoom = null; S.page = 1; render(); } }));
+}
+
+/* ==================================================================
+   Table
+   ================================================================== */
+
+const shown = id => S.columns.has(id);
+
+/* The product token is what identifies the client; the rest of a browser UA
+   is platform boilerplate. Chrome/Safari hide their real product behind
+   Mozilla/5.0, so pull the recognisable one out. */
+function uaShort(ua) {
+  const m = ua.match(/(Chrome|Firefox|Version|Edg)\/([0-9]+)/);
+  if (m) return (m[1] === 'Version' ? 'Safari' : m[1]) + ' ' + m[2];
+  return ua.split(' ')[0];
+}
+
+function relTime(d) {
+  const s = (CLOCK - d) / 1000;
+  if (s < 60) return `${Math.round(s)}s ago`;
+  if (s < 3600) return `${Math.round(s / 60)}m ago`;
+  if (s < 86400) return `${Math.round(s / 3600)}h ago`;
+  return `${Math.round(s / 86400)}d ago`;
+}
+function avatarFor(a) {
+  const cls = a.type === 'service_account' ? 'sa' : a.type === 'anonymous' ? 'anon' : '';
+  return el('span', { class: 'avatar ' + cls, 'aria-hidden': 'true', text: a.short });
+}
+function scopeCell(e) {
+  const r = e.resource;
+  if (!r.namespace && !r.project && !r.component) {
+    return el('div', { class: 'scope' }, el('span', { class: 'cluster', text: r.type ? 'cluster-scoped' : '—' }));
+  }
+  const bits = [r.namespace, r.project, r.component, r.resource].filter(Boolean);
+  const d = el('div', { class: 'scope' });
+  bits.forEach((b, i) => { if (i) d.append(el('span', { class: 'sep', text: '/' })); d.append(document.createTextNode(b)); });
+  // Environment is already namespace-qualified, so show only its tail here.
+  if (r.environment) d.append(el('div', { class: 'res-type', text: 'env ' + r.environment.split('/').pop() }));
+  return d;
+}
+
+function eventRow(e) {
+  const tr = el('tr', {
+    class: 'r-' + e.result, tabindex: '0',
+    'aria-selected': S.selected === e.event_id ? 'true' : 'false',
+    onclick: () => { S.selected = e.event_id; render(); },
+    onkeydown: ev => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); S.selected = e.event_id; render(); } },
+  });
+
+  if (shown('time')) tr.append(el('td', { class: 'c-time' },
+    el('div', { class: 't-abs', text: `${fmtDay(e.event_time)} ${e.event_time.toLocaleTimeString([], { hour12: false })}` }),
+    el('div', { class: 't-rel', text: relTime(e.event_time) }),
+  ));
+
+  if (shown('actor')) tr.append(el('td', {}, el('div', { class: 'actor' },
+    avatarFor(e.actor),
+    el('div', { class: 'actor-txt' },
+      el('div', { class: 'actor-id', text: e.actor.id, title: e.actor.id }),
+      el('div', { class: 'actor-sub', text: e.actor.type.replace('_', ' ') }),
+    ),
+  )));
+
+  if (shown('action')) tr.append(el('td', { class: 'action-cell' },
+    e.action
+      ? el('div', {}, el('span', { class: 'action-verb ' + verbOf(e.action), text: verbOf(e.action) }), el('code', { text: e.action }))
+      : el('span', { class: 'none' }, 'no action resolved', el('span', { class: 'none-why', text: 'token refused before routing' })),
+  ));
+
+  if (shown('resource')) tr.append(el('td', {},
+    e.resource.name
+      ? el('div', {}, el('div', { class: 'res-name', text: e.resource.name }), el('div', { class: 'res-type', text: e.resource.type }))
+      : el('span', { class: 'none', text: '—' }),
+  ));
+
+  if (shown('scope')) tr.append(el('td', {}, scopeCell(e)));
+  if (shown('result')) tr.append(el('td', {}, el('span', { class: 'pill ' + e.result, text: e.result === 'unauthenticated' ? 'unauth' : e.result })));
+  if (shown('surface')) tr.append(el('td', {},
+    el('span', { class: 'surface ' + e.surface }, el('span', { class: 'o-dot' }), e.surface),
+  ));
+  if (shown('category')) tr.append(el('td', {}, e.category ? el('span', { class: 'mono-sm', text: e.category }) : el('span', { class: 'none', text: '—' })));
+  if (shown('operation')) tr.append(el('td', {}, e.operation_id ? el('span', { class: 'mono-sm', text: e.operation_id }) : el('span', { class: 'none', text: '—' })));
+  if (shown('environment')) tr.append(el('td', {}, e.resource.environment ? el('span', { class: 'mono-sm', text: e.resource.environment }) : el('span', { class: 'none', text: '—' })));
+  if (shown('producer')) tr.append(el('td', {}, el('span', { class: 'mono-sm', text: e.producer })));
+  if (shown('request')) tr.append(el('td', {}, el('span', { class: 'mono-sm', text: e.request_id.slice(0, 13) + '…' })));
+  if (shown('ip')) tr.append(el('td', {}, e.source_ip ? el('span', { class: 'mono-sm', text: e.source_ip }) : el('span', { class: 'none', text: '—' })));
+  if (shown('ua')) tr.append(el('td', {}, e.user_agent
+    ? el('span', { class: 'mono-sm', title: e.user_agent, text: uaShort(e.user_agent) })
+    : el('span', { class: 'none', text: '—' })));
+  if (shown('http')) tr.append(el('td', {}, e.http
+    ? el('div', {}, el('span', { class: 'action-verb', text: e.http.method }), el('span', { class: 'mono-sm', text: e.http.path }))
+    : el('span', { class: 'none', text: '—' })));
+
+  // Copy-on-hover, as the runtime-logs rows do.
+  const copy = el('button', {
+    class: 'row-copy', type: 'button', title: 'Copy event JSON', 'aria-label': 'Copy event JSON',
+    html: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/></svg>',
+    onclick: async ev => {
+      ev.stopPropagation();
+      try {
+        await navigator.clipboard.writeText(JSON.stringify(wireOf(e), null, 2));
+        copy.title = 'Copied';
+      } catch { copy.title = 'Copy failed'; }
+      setTimeout(() => { copy.title = 'Copy event JSON'; }, 1600);
+    },
+  });
+  tr.append(el('td', { style: 'text-align:right' }, copy));
+
+  return tr;
+}
+
+function renderTable(rows) {
+  const head = document.getElementById('thead-row');
+  head.replaceChildren();
+  for (const c of COLUMNS) if (shown(c.id)) head.append(el('th', { scope: 'col', text: c.label }));
+  head.append(el('th', { scope: 'col', style: 'width:44px' }, el('span', { class: 'sr-only', text: 'Actions' })));
+
+  const body = document.getElementById('tbody');
+  body.replaceChildren();
+  const foot = document.getElementById('table-foot');
+  foot.replaceChildren();
+
+  if (!rows.length) {
+    body.append(el('tr', {}, el('td', { colspan: COLUMNS.filter(c => shown(c.id)).length + 1 },
+      el('div', { class: 'empty' },
+        el('h3', { text: 'Nothing matches these filters' }),
+        el('p', { text: 'No event in this window matches every filter you set. Widen the time range, or remove a filter — the query bar reads each attribute as AND, so filters stack quickly.' }),
+        el('button', { class: 'btn', type: 'button', text: 'Clear all filters', onclick: () => { S.tokens = []; S.draft = ''; S.page = 1; render(); } }),
+      ))));
+    return;
+  }
+
+  const slice = rows.slice(0, S.page * PAGE);
+  for (const e of slice) body.append(eventRow(e));
+
+  if (rows.length > slice.length) {
+    foot.append(el('div', { class: 'loadmore' },
+      el('button', { class: 'btn', type: 'button', text: `Load ${Math.min(PAGE, rows.length - slice.length)} more`, onclick: () => { S.page++; render(); } }),
+      el('span', { text: `Showing ${slice.length.toLocaleString()} of ${rows.length.toLocaleString()}` }),
+    ));
+  } else if (rows.length > PAGE) {
+    foot.append(el('div', { class: 'loadmore' }, el('span', { text: `All ${rows.length.toLocaleString()} matching events shown` })));
+  }
+}
+
+/* ==================================================================
+   Drawer
+   ================================================================== */
+
+/* Reproduces eventJSON exactly — same field order, same omitempty rules.
+   Three details a hand-written mock gets wrong unless it follows the tags:
+
+   - `action` and `category` carry NO omitempty, so an event that resolved no
+     operation publishes them as empty strings, not as absent keys.
+   - `resource` carries no omitempty either and is a pointer, so a non-resource
+     event publishes "resource": null rather than dropping the key.
+   - inside resource, Hierarchy's project/component/resource sit as flat
+     siblings after namespace, and namespace itself is the hierarchy's unless
+     Resource.Namespace is non-empty.
+
+   There is no audit_id: it would be 1:1 with event_id until an operation
+   emits more than one record, so it lands with the pre-action event that
+   gives it something to group. producer_instance is likewise not emitted. */
+function wireShape(e) {
+  const r = e.resource;
+  const hasResource = r.type || r.namespace || r.environment || r.project || r.component || r.resource || r.uid || r.name;
+
+  // resourceJSON's own published order: type, namespace, environment,
+  // project, component, resource, uid, name, metadata.
+  let resource;
+  if (hasResource) {
+    resource = {};
+    if (r.type) resource.type = r.type;
+    if (r.namespace) resource.namespace = r.namespace;
+    if (r.environment) resource.environment = r.environment;
+    if (r.project) resource.project = r.project;
+    if (r.component) resource.component = r.component;
+    if (r.resource) resource.resource = r.resource;
+    if (r.uid) resource.uid = r.uid;
+    if (r.name) resource.name = r.name;
+  }
+
+  const actor = { type: e.actor.type, id: e.actor.id };
+  if (e.actor.type !== 'anonymous') actor.issuer = ISSUER;
+  if (e.session_id) actor.session_id = e.session_id;
+  if (e.actor.ents) actor.entitlements = e.actor.ents;
+
+  const o = {
+    schema_version: SCHEMA_VERSION,
+    event_id: e.event_id,
+    event_time: e.event_time.toISOString(),
+    actor,
+    // action and category carry no omitempty, so a rejection that resolved
+    // no operation publishes them as empty strings rather than omitting them.
+    action: e.action || '',
+    category: e.category || '',
+    result: e.result,
+    request_id: e.request_id,
+    source_ip: e.source_ip || '',
+    user_agent: e.user_agent || '',
+    producer: e.producer,
+  };
+  if (e.surface) o.surface = e.surface;
+  if (e.operation_id) o.operation_id = e.operation_id;
+  if (e.http) o.http = { method: e.http.method, path: e.http.path };
+  // resource IS omitempty in v1 — omitted entirely, not published as null,
+  // when nothing resource-shaped was resolved.
+  if (resource) o.resource = resource;
+  return o;
+}
+
+function highlightJSON(obj) {
+  return esc(JSON.stringify(obj, null, 2))
+    .replace(/"([^"\\]*)":/g, '<span class="j-k">"$1"</span>:')
+    .replace(/: "([^"\\]*)"/g, ': <span class="j-s">"$1"</span>')
+    .replace(/: (\d+|true|false|null)/g, ': <span class="j-n">$1</span>');
+}
+
+/* A value in the drawer that filters the list to itself — the fastest path
+   from "this looks odd" to "show me everything like it". */
+function drill(attr, value) {
+  return el('button', {
+    class: 'drill', type: 'button', text: value,
+    title: `Filter by ${attr}:${value}`,
+    onclick: () => { addToken(attr, value); S.selected = null; render(); },
+  });
+}
+
+/* Entitlements are map[string][]string — keyed by claim name. ExtractActor
+   builds exactly one key today, but the type allows more, so render every
+   claim rather than assuming the first. Naming the claim matters: "developer"
+   means nothing without knowing it came from `groups`. */
+function entitlementsCell(ents) {
+  const wrap = el('span', {});
+  Object.entries(ents).forEach(([claim, vals], ci) => {
+    if (ci) wrap.append(el('span', { class: 'hint', style: 'margin-bottom:4px' }));
+    vals.forEach((v, i) => {
+      if (i) wrap.append(document.createTextNode(', '));
+      wrap.append(drill('actor.entitlements.' + claim, v));
+    });
+    wrap.append(el('span', { class: 'hint', text: `from the ${claim} claim` }));
+  });
+  return wrap;
+}
+
+function kv(pairs) {
+  const dl = el('dl', { class: 'kv' });
+  for (const [k, v, opts] of pairs) {
+    if (v === undefined) continue;
+    dl.append(el('dt', { text: k }));
+    const dd = el('dd', { class: (opts && opts.mono) ? 'mono' : '' });
+    if (v === null) dd.append(el('span', { class: 'absent', text: (opts && opts.absent) || 'not recorded' }));
+    else dd.append(typeof v === 'string' ? document.createTextNode(v) : v);
+    if (opts && opts.hint) dd.append(el('span', { class: 'hint', text: opts.hint }));
+    dl.append(dd);
+  }
+  return dl;
+}
+
+function renderDrawer() {
+  const scrim = document.getElementById('scrim');
+  const dr = document.getElementById('drawer');
+  const e = EVENTS.find(x => x.event_id === S.selected);
+  if (!e) { scrim.classList.remove('open'); dr.classList.remove('open'); dr.replaceChildren(); return; }
+
+  scrim.classList.add('open');
+  scrim.onclick = () => { S.selected = null; render(); };
+  dr.classList.add('open');
+  dr.replaceChildren();
+  const close = () => { S.selected = null; render(); };
+
+  dr.append(el('div', { class: 'dr-head' },
+    el('div', { class: 'dr-eyebrow' }, 'Audit event', el('span', { class: 'grow' }),
+      el('button', { class: 'dr-x', type: 'button', 'aria-label': 'Close', html: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>', onclick: close })),
+    el('div', { class: 'dr-title', id: 'dr-title', text: e.action || 'authentication rejected' }),
+    el('div', { class: 'dr-meta' },
+      el('span', { class: 'pill ' + e.result, text: e.result }),
+      el('span', { class: 'surface ' + e.surface }, el('span', { class: 'o-dot' }), e.surface === 'mcp' ? 'via MCP' : 'via the REST API'),
+      el('span', { class: 't-rel', text: `${e.event_time.toLocaleString([], { hour12: false })} · ${relTime(e.event_time)}` }),
+    ),
+  ));
+
+  const body = el('div', { class: 'dr-body' });
+
+  if (e.result === 'unauthenticated') {
+    body.append(el('div', { class: 'dr-sec' },
+      el('div', { class: 'related' },
+        el('span', { html: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3l8 3v6c0 4.4-3.2 7.9-8 9-4.8-1.1-8-4.6-8-9V6z"/><path d="M12 9v3M12 15h.01"/></svg>' }),
+        el('span', {}, el('b', { text: 'Refused at the boundary.' }),
+          ' The token never resolved to an operation, so no action, category, operation or resource was recorded — and no reason for the rejection either. Note the published event carries action and category as empty strings rather than omitting them, and resource as null. What is here is the time, surface, request ID, source IP and user agent. OpenChoreo does not observe sign-in, so match this against your identity provider\'s own records.'),
+      )));
+  }
+
+  body.append(el('div', { class: 'dr-sec' },
+    el('h4', { text: 'Who' }),
+    kv([
+      ['Actor', drill('actor.id', e.actor.id), { mono: true, hint: 'the token’s validated sub claim — unique only within the issuer' }],
+      ['Type', drill('actor.type', e.actor.type)],
+      ['Issuer', e.actor.type === 'anonymous' ? null : drill('actor.issuer', ISSUER), { mono: true, absent: 'no validated token' }],
+      ['Session', e.session_id ? drill('actor.session_id', e.session_id) : null,
+        { mono: true, hint: e.session_id ? 'the sid claim — match this against the IdP’s login record' : undefined,
+          absent: 'no sid claim — OIDC leaves it optional, and client-credentials tokens carry none' }],
+      ['Entitlements', e.actor.ents ? entitlementsCell(e.actor.ents) : null,
+        { absent: 'no entitlement claim on the token' }],
+    ]),
+  ));
+
+  body.append(el('div', { class: 'dr-sec' },
+    el('h4', { text: 'What' }),
+    kv([
+      ['Action', e.action ? drill('action', e.action) : null, { mono: true, absent: 'empty string — no operation resolved' }],
+      ['Category', e.category ? drill('category', e.category) : null, { absent: 'empty string — no operation resolved' }],
+      ['Operation ID', e.operation_id ? drill('operation_id', e.operation_id) : null, { mono: true, absent: 'none' }],
+      ['Surface', drill('surface', e.surface), { mono: true, hint: e.surface === 'mcp' ? 'MCP wraps the REST API, so the action is audited once, here. The tool name itself is not recorded.' : undefined }],
+      ['Request line', e.http ? el('span', {}, drill('http.method', e.http.method), document.createTextNode(' '), drill('http.path', e.http.path)) : null,
+        { mono: true, absent: 'none — an MCP tools/call has no request line of its own' }],
+      ['Outcome', el('span', { class: 'pill ' + e.result, text: e.result }), { hint: RESULTS.find(r => r.id === e.result).note }],
+    ]),
+  ));
+
+  if (e.resource.type) {
+    const path = el('div', { class: 'path' });
+    const segs = e.resource.namespace ? [['namespace', e.resource.namespace]] : [['scope', 'cluster']];
+    if (e.resource.project) segs.push(['project', e.resource.project]);
+    if (e.resource.component) segs.push(['component', e.resource.component]);
+    if (e.resource.resource) segs.push(['resource', e.resource.resource]);
+    segs.forEach((s, i) => {
+      if (i) path.append(el('span', { class: 'arrow', text: '/' }));
+      path.append(el('span', { class: 'path-seg' }, el('span', { class: 'k', text: s[0] }), el('span', { class: 'v', text: s[1] })));
+    });
+    body.append(el('div', { class: 'dr-sec' },
+      el('h4', { text: 'Where' }),
+      path,
+      el('div', { style: 'height:6px' }),
+      el('div', { class: 'res-type', style: 'margin-bottom:12px', text: 'Hierarchy the authorization decision was made on — recorded before the policy engine evaluates, so a denial carries it too.' }),
+      kv([
+        ['Resource type', drill('resource.type', e.resource.type), { mono: true }],
+        ['Environment', e.resource.environment ? drill('resource.environment', e.resource.environment) : undefined,
+          { mono: true, hint: 'namespace-qualified, and not a hierarchy level — it comes from the ABAC attributes a CEL condition evaluates against' }],
+        ['Name', drill('resource.name', e.resource.name), { mono: true }],
+        ['Resource UID', e.resource.uid ? drill('resource.uid', e.resource.uid) : null, { mono: true, hint: 'server-generated and never reused, so a delete-then-recreate is distinguishable from an update', absent: 'none — the operation returned no object' }],
+      ]),
+    ));
+  }
+
+  body.append(el('div', { class: 'dr-sec' },
+    el('h4', { text: 'Correlation' }),
+    kv([
+      ['Event ID', e.event_id, { mono: true, hint: 'UUID v7, so it sorts by creation time. One record per operation today — a grouping id arrives with the pre-action event.' }],
+      ['Request ID', drill('request_id', e.request_id), { mono: true, hint: 'joins this event to the access log; validated as a UUID, or regenerated' }],
+      ['Client', e.user_agent ? el('span', {}, drill('user_agent', e.user_agent),
+        el('span', { class: 'hint', text: 'client-supplied, so it is a claim rather than proof' })) : null,
+        { mono: true, absent: 'no User-Agent header sent' }],
+      ['Source IP', e.source_ip ? drill('source_ip', e.source_ip) : null, { mono: true, absent: e.surface === 'mcp' ? 'unavailable for a direct MCP client — no RemoteAddr, and no forwarding headers set' : 'not recorded' }],
+      ['Producer', drill('producer', e.producer), { mono: true }],
+      ['Schema version', drill('schema_version', SCHEMA_VERSION), { mono: true, hint: 'major on a removal or a changed representation, minor on an addition' }],
+    ]),
+  ));
+
+  const copyBtn = el('button', { class: 'btn tiny', type: 'button', text: 'Copy' });
+  copyBtn.addEventListener('click', async () => {
+    try { await navigator.clipboard.writeText(JSON.stringify(wireShape(e), null, 2)); copyBtn.textContent = 'Copied'; }
+    catch { copyBtn.textContent = 'Press ⌘C'; }
+    setTimeout(() => { copyBtn.textContent = 'Copy'; }, 1600);
+  });
+  body.append(el('div', { class: 'dr-sec' },
+    el('div', { class: 'sec-head-row' }, el('h4', { text: 'Event as published' }), copyBtn),
+    el('pre', { class: 'dr-json', html: highlightJSON(wireShape(e)) }),
+  ));
+
+  dr.append(body);
+}
+
+/* ==================================================================
+   Live tail
+   ================================================================== */
+
+/* A newly arrived event can carry a value no seeded event had, so fold it into
+   the discovered facet lists — otherwise the suggestion counts drift away from
+   what the table is showing. */
+function indexEvent(ev) {
+  for (const p of FIELD_PATHS) {
+    const v = valueAt(ev, p);
+    if (v === null || v === undefined) continue;
+    const known = FIELD_VALUES.get(p);
+    if (!known) continue;
+    for (const one of (Array.isArray(v) ? v : [v])) {
+      if (typeof one === 'object') continue;
+      if (!known.includes(one)) { known.push(one); known.sort(); }
+    }
+  }
+}
+
+const LIVE_INTERVAL_MS = 2500;
+const LIVE_BACKLOG_CAP = 900;
+let liveTimer = null;
+
+function liveTick() {
+  CLOCK = new Date(CLOCK.getTime() + 2000 + Math.floor(rnd() * 5000));
+  const arriving = 1 + (rnd() < 0.35 ? 1 : 0);
+  for (let i = 0; i < arriving; i++) {
+    const roll = rnd();
+    const ev = roll < 0.08 ? unauthEvent(CLOCK.getTime())
+      : roll < 0.15 ? observerEvent(CLOCK.getTime())
+      : newEvent(CLOCK.getTime());
+    EVENTS.unshift(ev);
+    indexEvent(ev);
+  }
+  // EVENTS is newest-first, so trimming the tail drops the oldest.
+  if (EVENTS.length > LIVE_BACKLOG_CAP) EVENTS.length = LIVE_BACKLOG_CAP;
+  S.loadedAt = new Date(CLOCK);
+  render();
+}
+
+function setLive(on) {
+  S.isLive = on;
+  if (liveTimer) { clearInterval(liveTimer); liveTimer = null; }
+  // Zooming pins the window to a past slice, so tailing into it would be a lie.
+  if (on) { S.zoom = null; liveTimer = setInterval(liveTick, LIVE_INTERVAL_MS); }
+  render();
+}
+
+/* ==================================================================
+   Results toolbar
+   ================================================================== */
+
+function renderToolbar(rows) {
+  const box = document.getElementById('rtbar-actions');
+  box.replaceChildren();
+
+  const desc = S.sort === 'desc';
+  // The arrow flips with the order, as LogsActions does — the label alone
+  // changing too little to register as a state change.
+  const arrow = desc
+    ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V4M6 10l6-6 6 6"/></svg>'
+    : '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v16M6 14l6 6 6-6"/></svg>';
+  box.append(el('button', {
+    class: 'btn tiny', type: 'button',
+    title: desc ? 'Sort events by Newest First' : 'Sort events by Oldest First',
+    onclick: () => { S.sort = desc ? 'asc' : 'desc'; S.page = 1; render(); },
+  }, el('span', { class: 'btn-ico', html: arrow }), desc ? 'Newest First' : 'Oldest First'));
+
+  box.append(el('button', {
+    class: 'btn tiny' + (S.isLive ? ' is-live' : ''), type: 'button',
+    'aria-pressed': S.isLive ? 'true' : 'false',
+    title: S.isLive ? 'Stop Live Updates' : 'Start Live Updates',
+    onclick: () => setLive(!S.isLive),
+  }, el('span', { class: 'live-dot' + (S.isLive ? ' on' : '') }), 'Live'));
+
+  box.append(el('button', {
+    class: 'btn tiny', type: 'button', title: 'Refresh',
+    onclick: () => { S.loadedAt = new Date(CLOCK); render(); },
+  }, el('span', { class: 'btn-ico', html: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg>' }), 'Refresh'));
+
+  // Phrased as the runtime-logs stats row is: "Total logs: N" /
+  // "Last updated at: <date>".
+  const w = activeWindow();
+  document.getElementById('result-count').replaceChildren(
+    document.createTextNode('Total events: '),
+    el('b', { text: rows.length.toLocaleString() }),
+    document.createTextNode(` · ${fmtRange(w.from, w.to)}`),
+  );
+  document.getElementById('result-updated').textContent =
+    `Last updated at: ${S.loadedAt.toLocaleString([], { hour12: false })}`;
+}
+
+/* ==================================================================
+   Render
+   ================================================================== */
+
+function render() {
+  const rows = filtered();
+  rows.sort((a, b) => S.sort === 'desc' ? b.event_time - a.event_time : a.event_time - b.event_time);
+  renderQueryBar();
+  renderRangeField();
+  renderColumnsField();
+  renderLenses();
+  renderTimeline(rows);
+  renderToolbar(rows);
+  renderTable(rows);
+  renderDrawer();
+}
+
+/* In the chart-less build, take the timeline out of the document rather than
+   hiding it — a display:none chart is still a chart in the markup. */
+if (!CHART_ENABLED) {
+  for (const id of ['tl-head', 'tl-body', 'chart-toggle']) {
+    document.getElementById(id)?.remove();
+  }
+}
+
+render();
+
+</script>
